@@ -59,7 +59,7 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $domain = rtrim($route['domain'], '/');
+        $domain = 'https://' . preg_replace('#^https?://#i', '', rtrim($route['domain'], '/'));
 
         $authResponse = Http::acceptJson()
             ->asJson()
