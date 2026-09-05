@@ -41,7 +41,7 @@ class AuthController extends Controller
                 'X-Node-Id' => $nodeId,
             ])
             ->get(
-                config('services.core_x.url' ?? 'https://core-x.almaxcloud.com') . '/api/v1/engine/resolve'
+                'https://core-x.almaxcloud.com' . '/api/v1/engine/resolve'
             );
 
         if (!$validation->successful()) {
