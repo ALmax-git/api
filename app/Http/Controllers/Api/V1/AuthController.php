@@ -51,6 +51,7 @@ class AuthController extends Controller
             );
         }
 
+        return 'test';
         $route = $validation->json();
 
         if (!($route['valid'] ?? false)) {
