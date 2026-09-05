@@ -40,7 +40,7 @@ class AuthController extends Controller
                 'X-Namespace' => $namespace,
                 'X-Node-Id' => $nodeId,
             ])
-            ->get(
+            ->post(
                 'https://core-x.almaxcloud.com' . '/api/v1/engine/resolve'
             );
 
