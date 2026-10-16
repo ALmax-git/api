@@ -259,15 +259,15 @@
                                 </svg>
                             </div>
                             <h3 class="group-hover:text-core-cyan mb-1 text-base font-bold text-white transition-colors">5-Minute Quickstart</h3>
-                            <p class="text-xs text-slate-400">Initialize your first Core-X Web OS container, authenticate via OAuth 2.1, and launch a window applet.</p>
+                            <p class="text-xs text-slate-400">Initialize your first Core-X Web OS container, authenticate via X-Engine, and launch a window applet.</p>
                         </div>
-                        <div class="glass-panel border-core-border hover:border-core-cyan/50 group cursor-pointer rounded-xl border p-5 transition-all" @click="navigateTo('windows-api')">
+                        <div class="glass-panel border-core-border hover:border-core-cyan/50 group cursor-pointer rounded-xl border p-5 transition-all" @click="navigateTo('web-api')">
                             <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-400 transition-transform group-hover:scale-110">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                                 </svg>
                             </div>
-                            <h3 class="group-hover:text-core-cyan mb-1 text-base font-bold text-white transition-colors">Windows & Applets API</h3>
+                            <h3 class="group-hover:text-core-cyan mb-1 text-base font-bold text-white transition-colors">Web OS & Applets API</h3>
                             <p class="text-xs text-slate-400">Control desktop hierarchy, tiling layouts, virtual viewports, and inter-process messaging.</p>
                         </div>
                     </div>
@@ -295,11 +295,11 @@
                                 <span>Copy</span>
                             </button>
                             <pre x-show="selectedLanguage === 'javascript'">
-<span class="text-purple-400">import</span> { CoreXKernel } <span class="text-purple-400">from</span> <span class="text-emerald-300">'@almax/core-x'</span>;
+<span class="text-purple-400">import</span> { Helpers, Payments } <span class="text-purple-400">from</span> <span class="text-emerald-300">'@almax/core-x'</span>;
 <span class="text-slate-500">// Initialize secure Core-X session</span>
 <span class="text-blue-400">import </span>XEngine <span class="text-purple-400">from </span> <span class="text-yellow-300">"@almaxcloud/core-x";</span>
 <span class="text-blue-400">XEngine</span>.<span class="text-yellow-300">boot({ public: 'App Public key' })</span> 
-console.<span class="text-yellow-300">log</span>(<span class="text-emerald-300">`Core-X OS booted successfully.`</span>);
+console.<span class="text-yellow-300">log</span>(<span class="text-emerald-300">`Core-X OS booted successfully. ${Helpers.copy('my text')}`</span>);
 //                          </pre>
 
                             <pre style="display: none;" x-show="selectedLanguage === 'curl'">
@@ -358,11 +358,11 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                                 <h3 class="mb-1 font-bold text-white">Spawn Your First Window Applet</h3>
                                 <p class="mb-3 text-xs text-slate-400">Create a script to render a managed business window inside the Core-X workspace:</p>
                                 <div class="border-core-border rounded-lg border bg-black/90 p-4 font-mono text-xs text-slate-300">
-                                    <span class="text-purple-400">const</span> applet = <span class="text-blue-400">await</span> kernel.windows.<span class="text-yellow-300">create</span>({<br>
-                                    &nbsp;&nbsp;title: <span class="text-emerald-300">'Q3 Financial Analyzer'</span>,<br>
+                                    <span class="text-purple-400">const</span> applet = <span class="text-blue-400">await</span> Launcher.<span class="text-yellow-300">create</span>({<br>
+                                    &nbsp;&nbsp;container: <span class="text-emerald-300">'#my_div_element'</span>,<br>
                                     &nbsp;&nbsp;width: <span class="text-orange-400">1200</span>,<br>
                                     &nbsp;&nbsp;height: <span class="text-orange-400">800</span>,<br>
-                                    &nbsp;&nbsp;url: <span class="text-emerald-300">'https://apps.almaxcloud.com/finance'</span><br>
+                                    &nbsp;&nbsp;name_space: <span class="text-emerald-300">'com.my_app.namespace'</span><br>
                                     });<br>
                                     applet.<span class="text-yellow-300">mount</span>();
                                 </div>
@@ -390,7 +390,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                 <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'auth'">
                     <div class="border-core-border border-b pb-6">
                         <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Security</span>
-                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Authentication & OAuth 2.1</h1>
+                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Authentication & X-Engine</h1>
                         <p class="text-sm text-slate-400">Core-X enforces strict cryptographic verification and token-based authentication for all daemon requests.</p>
                     </div>
 
@@ -818,11 +818,11 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                             {
                                 id: 'auth',
                                 category: 'Security',
-                                title: 'Authentication & OAuth 2.1',
+                                title: 'Authentication & X-Engine',
                                 excerpt: 'Cryptographic verification and token-based authentication for daemon requests.'
                             },
                             {
-                                id: 'windows-api',
+                                id: 'web-api',
                                 category: 'Core-X APIs',
                                 title: 'Create Window Applet',
                                 excerpt: 'Control desktop hierarchy, tiling layouts, and virtual viewports.'
