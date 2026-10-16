@@ -336,7 +336,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                             <div class="border-core-cyan/40 text-core-cyan flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-cyan-500/10 font-mono font-bold">1</div>
                             <div>
                                 <h3 class="mb-1 font-bold text-white">Obtain API Credentials</h3>
-                                <p class="text-xs leading-relaxed text-slate-400">Log into your <a class="text-core-cyan underline" href="#">ALmax Cloud Dashboard</a>, navigate to Core-X Settings, and generate a Personal Access Token (PAT) with <code class="text-core-cyan font-mono">os:kernel:write</code> scope.</p>
+                                <p class="text-xs leading-relaxed text-slate-400">Log into your <a class="text-core-cyan underline" href="https:almaxcloud.com">ALmax Cloud Dashboard</a>, navigate to Core-X Settings, and generate a Personal Access Token (PAT) with <code class="text-core-cyan font-mono">os:kernel:write</code> scope.</p>
                             </div>
                         </div>
 
