@@ -893,11 +893,11 @@ curl -X POST https://api.core-x.almaxcloud.com/v1/kernel/boot \
                     copySnippet() {
                         let code = "";
                         if (this.selectedLanguage === 'javascript') {
-                            code = "import { CoreXKernel } from '@almax/core-x';\nconst kernel = new CoreXKernel({ clientId: 'cx_live_99a8fbc21' });\nawait kernel.boot();";
+                            code = "import { XEngine } from '@almax/core-x';\nXEngine.boot({ public: 'App Public key' });";
                         } else if (this.selectedLanguage === 'python') {
-                            code = "from almax_core_x import CoreXKernel\nkernel = CoreXKernel(client_id='cx_live_99a8fbc21')\nkernel.boot()";
+                            code = "from almax_core_x import CoreXKernel\XEngine.boot('App Public key');";
                         } else {
-                            code = "curl -X POST https://api.core-x.almaxcloud.com/v1/kernel/boot -H 'Authorization: Bearer cx_pat_secret'";
+                            code = "curl -X POST https://api.almaxcloud.com/api/v1/app/boot -H 'Authorization: Bearer App Public key'";
                         }
                         this.copyText(code);
                     },
