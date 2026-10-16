@@ -284,7 +284,6 @@
                             <!-- Language Tabs -->
                             <div class="flex space-x-1">
                                 <button class="rounded px-2.5 py-1 font-mono text-[11px] transition-colors" @click="selectedLanguage = 'javascript'" :class="selectedLanguage === 'javascript' ? 'bg-core-cyan text-black font-semibold' : 'bg-slate-900 text-slate-400 hover:text-white'">JS/TS</button>
-                                <button class="rounded px-2.5 py-1 font-mono text-[11px] transition-colors" @click="selectedLanguage = 'python'" :class="selectedLanguage === 'python' ? 'bg-core-cyan text-black font-semibold' : 'bg-slate-900 text-slate-400 hover:text-white'">Python</button>
                                 <button class="rounded px-2.5 py-1 font-mono text-[11px] transition-colors" @click="selectedLanguage = 'curl'" :class="selectedLanguage === 'curl' ? 'bg-core-cyan text-black font-semibold' : 'bg-slate-900 text-slate-400 hover:text-white'">cURL</button>
                             </div>
                         </div>
@@ -295,35 +294,21 @@
                                 </svg>
                                 <span>Copy</span>
                             </button>
-                            <pre x-show="selectedLanguage === 'javascript'"><span class="text-purple-400">import</span> { CoreXKernel } <span class="text-purple-400">from</span> <span class="text-emerald-300">'@almax/core-x'</span>;
+                            <pre x-show="selectedLanguage === 'javascript'">
+<span class="text-purple-400">import</span> { CoreXKernel } <span class="text-purple-400">from</span> <span class="text-emerald-300">'@almax/core-x'</span>;
+<span class="text-slate-500">// Initialize secure Core-X session</span>
+<span class="text-blue-400">import </span>XEngine <span class="text-purple-400">from </span> <span class="text-yellow-300">"@almaxcloud/core-x";</span>
+<span class="text-blue-400">XEngine</span>.<span class="text-yellow-300">boot({ public: 'App Public key' })</span> 
+console.<span class="text-yellow-300">log</span>(<span class="text-emerald-300">`Core-X OS booted successfully.`</span>);
+//                          </pre>
 
-<span class="text-slate-500">// Initialize secure Core-X OS session</span>
-<span class="text-blue-400">const</span> kernel = <span class="text-purple-400">new</span> <span class="text-yellow-300">CoreXKernel</span>({
-    clientId: <span class="text-emerald-300">'cx_live_99a8fbc21'</span>,
-    region: <span class="text-emerald-300">'us-east-almax'</span>,
-    mode: <span class="text-emerald-300">'secure-sandbox'</span>
-});
-
-<span class="text-blue-400">await</span> kernel.<span class="text-yellow-300">boot</span>();
-console.<span class="text-yellow-300">log</span>(<span class="text-emerald-300">`Core-X OS booted successfully. Kernel ID: ${kernel.sessionId}`</span>);</pre>
-
-                            <pre style="display: none;" x-show="selectedLanguage === 'python'"><span class="text-purple-400">import</span> os
-<span class="text-purple-400">from</span> almax_core_x <span class="text-purple-400">import</span> CoreXKernel
-
-<span class="text-slate-500"># Initialize Core-X SDK instance</span>
-kernel = CoreXKernel(
-    client_id=os.getenv(<span class="text-emerald-300">"CORE_X_CLIENT_ID"</span>),
-    region=<span class="text-emerald-300">"us-east-almax"</span>
-)
-
-kernel.boot()
-print(f<span class="text-emerald-300">"Connected to Core-X Daemon. Status: {kernel.status}"</span>)</pre>
-
-                            <pre style="display: none;" x-show="selectedLanguage === 'curl'"><span class="text-slate-500"># Authenticate and initialize Core-X OS session</span>
-curl -X POST https://api.core-x.almaxcloud.com/v1/kernel/boot \
-  -H <span class="text-emerald-300">"Authorization: Bearer cx_pat_secret_998127"</span> \
+                            <pre style="display: none;" x-show="selectedLanguage === 'curl'">
+<span class="text-slate-500"># Authenticate and initialize Core-X session</span>
+curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
+  -H <span class="text-emerald-300">"Authorization: Bearer App_Public_key"</span> \
   -H <span class="text-emerald-300">"Content-Type: application/json"</span> \
-  -d <span class="text-emerald-300">'{"region": "us-east-almax", "client_version": "2.5.0"}'</span></pre>
+  -d <span class="text-emerald-300">'{"cluster": "dev_server", "client_version": "2.5.0"}'</span>
+                            </pre>
                         </div>
                     </div>
 
@@ -894,8 +879,6 @@ curl -X POST https://api.core-x.almaxcloud.com/v1/kernel/boot \
                         let code = "";
                         if (this.selectedLanguage === 'javascript') {
                             code = "import { XEngine } from '@almax/core-x';\nXEngine.boot({ public: 'App Public key' });";
-                        } else if (this.selectedLanguage === 'python') {
-                            code = "from almax_core_x import CoreXKernel\XEngine.boot('App Public key');";
                         } else {
                             code = "curl -X POST https://api.almaxcloud.com/api/v1/app/boot -H 'Authorization: Bearer App Public key'";
                         }
