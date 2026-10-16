@@ -336,7 +336,8 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                             <div class="border-core-cyan/40 text-core-cyan flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-cyan-500/10 font-mono font-bold">1</div>
                             <div>
                                 <h3 class="mb-1 font-bold text-white">Obtain API Credentials</h3>
-                                <p class="text-xs leading-relaxed text-slate-400">Log into your <a class="text-core-cyan underline" href="https://almaxcloud.com">ALmax Cloud Dashboard</a>, navigate to Core-X Settings, and generate a Personal Access Token (PAT) with <code class="text-core-cyan font-mono">os:kernel:write</code> scope.</p>
+                                <p class="text-xs leading-relaxed text-slate-400">Log into your <a class="text-core-cyan underline" href="https://almaxcloud.com" target="_blank">ALmax Cloud Dashboard</a>, navigate to Core-X Settings->Accounts->API and generate a Personal Access Token (PAT) with <code class="text-core-cyan font-mono">READ:UPDATE:CREATE:DELETE</code> scope.</p>
+                                <p class="mt-2 text-xs leading-relaxed text-slate-400">After obtaining your API token, email <a class="text-core-cyan underline" href="mailto:support@almaxcloud.com">support@almaxcloud.com</a> requesting developer activation and include: Developer Name, Developer Website, Support Email, Core-X user_id, Business Documents, and Relevant Docs.</p>
                             </div>
                         </div>
 
