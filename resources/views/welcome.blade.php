@@ -1,723 +1,938 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html class="dark" lang="en">
 
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>X-Engine Gateway :: Core-X</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js"></script>
-        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+        <title>Core-X Developer Documentation | ALmax Cloud</title>
+
+        <!-- SEO Meta Tags -->
+        <meta name="description" content="Core-X Developer Documentation — comprehensive guides, API references, and examples for building on the ALmax Cloud platform.">
+        <meta name="keywords" content="ALmax Cloud, Core-X, developer documentation, API, SDK, guides, tutorials, cloud platform">
+        <meta name="author" content="ALmax Cloud">
+        <meta name="robots" content="index, follow">
+        <link href="https://api.almaxcloud.com/" rel="canonical" />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:title" content="Core-X Developer Documentation | ALmax Cloud">
+        <meta property="og:description" content="Comprehensive developer documentation for Core-X on ALmax Cloud — API references, quickstart guides, and examples.">
+        <meta property="og:url" content="https://api.almaxcloud.com/">
+        <meta property="og:site_name" content="ALmax Cloud">
+        <meta property="og:image" content="https://api.almaxcloud.com/og-image.png">
+
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:site" content="@almaxcloud">
+        <meta name="twitter:title" content="Core-X Developer Documentation | ALmax Cloud">
+        <meta name="twitter:description" content="API references, guides and examples for building on ALmax Cloud's Core-X platform.">
+        <meta name="twitter:image" content="https://api.almaxcloud.com/og-image.png">
+
         <style>
-            :root {
-                --ink: #05080d;
-                --panel: rgba(9, 16, 25, .82);
-                --line: rgba(134, 205, 237, .16);
-                --muted: #8e9dab;
-                --cyan: #57d8ff;
-                --cyan-soft: #aeeeff;
-            }
-
-            * {
-                box-sizing: border-box;
-            }
-
-            html {
-                scroll-behavior: smooth;
-                background: #05080d;
-            }
-
             body {
-                width: 100%;
-                margin: 0;
-                overflow-x: hidden;
-                color: #eff8ff;
-                font-family: "DM Sans", sans-serif;
+                background-color: #020408;
+                color: #f8fafc;
+                font-family: 'Inter', sans-serif;
             }
 
-            .mono {
-                font-family: "Space Mono", monospace;
+            .bg-grid {
+                background-size: 40px 40px;
+                background-image:
+                    linear-gradient(to right, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
             }
 
-            .page-shell {
-                position: relative;
-                isolation: isolate;
-                width: 100%;
-                min-height: 100%;
-                background: radial-gradient(circle at 50% 0%, rgba(17, 77, 113, .18), transparent 34rem), #05080d;
+            .glow-cyan {
+                box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
             }
 
-            #world-canvas {
-                position: fixed;
-                inset: 0;
-                z-index: -1;
-                width: 100%;
-                height: 100%;
-                pointer-events: none;
-            }
-
-            .atmosphere {
-                position: fixed;
-                inset: 0;
-                z-index: -1;
-                pointer-events: none;
-                background:
-                    radial-gradient(circle at 50% 28%, rgba(21, 116, 163, .1), transparent 30rem),
-                    linear-gradient(180deg, rgba(5, 8, 13, .16), rgba(5, 8, 13, .8) 76%, #05080d);
-            }
-
-            .grid-overlay {
-                position: fixed;
-                inset: 0;
-                z-index: -1;
-                pointer-events: none;
-                opacity: .32;
-                background-image: linear-gradient(rgba(114, 188, 220, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(114, 188, 220, .045) 1px, transparent 1px);
-                background-size: 58px 58px;
-                mask-image: linear-gradient(to bottom, black, transparent 80%);
-            }
-
-            .top-nav {
-                background: rgba(5, 8, 13, .72);
-                border: 1px solid var(--line);
-                backdrop-filter: blur(20px);
-                box-shadow: 0 16px 50px rgba(0, 0, 0, .18);
-            }
-
-            .nav-link {
-                color: #8b9bad;
-                transition: color .2s ease, text-shadow .2s ease;
-            }
-
-            .nav-link:hover,
-            .nav-link:focus-visible {
-                color: #eaf9ff;
-                text-shadow: 0 0 14px rgba(87, 216, 255, .8);
-                outline: none;
-            }
-
-            .hero-stage {
-                min-height: calc(100 * min(var(--vh, 1vh), 1vh));
-                display: flex;
-                align-items: center;
-                position: relative;
-                overflow: hidden;
-            }
-
-            .micro-label {
-                letter-spacing: .16em;
-                text-transform: uppercase;
-                font: 10px "Space Mono", monospace;
-            }
-
-            .eyebrow-line {
-                width: 36px;
-                height: 1px;
-                background: #57d8ff;
-                box-shadow: 0 0 12px rgba(87, 216, 255, .85);
+            .glow-cyan-lg {
+                box-shadow: 0 0 50px rgba(0, 240, 255, 0.25);
             }
 
             .glass-panel {
-                background: linear-gradient(135deg, rgba(13, 28, 40, .82), rgba(5, 10, 16, .72));
-                border: 1px solid var(--line);
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035), 0 22px 58px rgba(0, 0, 0, .13);
-                backdrop-filter: blur(16px);
+                background: rgba(13, 19, 34, 0.75);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(0, 240, 255, 0.15);
             }
 
-            .status-dot {
-                width: 7px;
-                height: 7px;
-                border-radius: 50%;
-                background: #5dffbd;
-                box-shadow: 0 0 12px #5dffbd;
-                animation: pulse 2.2s ease-in-out infinite;
+            /* Custom scrollbar */
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
             }
 
-            .section-rule {
-                height: 1px;
-                background: linear-gradient(90deg, transparent, rgba(87, 216, 255, .38), transparent);
+            ::-webkit-scrollbar-track {
+                background: #020408;
             }
 
-            .depth-card {
-                transform-style: preserve-3d;
-                transition: transform .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
-                will-change: transform;
+            ::-webkit-scrollbar-thumb {
+                background: #1e293b;
+                border-radius: 3px;
             }
 
-            .depth-card:hover,
-            .depth-card.is-selected {
-                border-color: rgba(87, 216, 255, .8);
-                background: rgba(12, 32, 46, .94);
-                box-shadow: 0 18px 45px rgba(1, 31, 45, .36), inset 0 1px 0 rgba(180, 245, 255, .08);
-            }
-
-            .architecture-orbit {
-                position: relative;
-                overflow: hidden;
-                background: radial-gradient(circle at 50% 50%, rgba(13, 79, 112, .24), transparent 30%), rgba(6, 13, 20, .76);
-            }
-
-            .architecture-orbit::before {
-                content: "";
-                position: absolute;
-                width: 310px;
-                height: 310px;
-                left: 50%;
-                top: 50%;
-                border: 1px solid rgba(87, 216, 255, .15);
-                border-radius: 50%;
-                transform: translate(-50%, -50%);
-                box-shadow: 0 0 70px rgba(48, 186, 240, .08), inset 0 0 45px rgba(48, 186, 240, .05);
-                pointer-events: none;
-            }
-
-            .hub-core {
-                position: relative;
-                z-index: 1;
-                background: radial-gradient(circle at 38% 30%, #21789d, #07111b 66%);
-                border: 1px solid rgba(96, 220, 255, .75);
-                box-shadow: 0 0 55px rgba(17, 144, 202, .27), inset 0 0 32px rgba(82, 214, 255, .14);
-            }
-
-            .route-card {
-                border: 1px solid rgba(120, 181, 210, .18);
-                background: rgba(4, 10, 16, .62);
-            }
-
-            .route-card.is-selected {
-                border-color: #57d8ff;
-                color: #d9f9ff;
-                box-shadow: 0 0 22px rgba(87, 216, 255, .16);
-            }
-
-            .endpoint-card {
-                min-height: 150px;
-            }
-
-            .journey-path {
-                height: 1px;
-                flex: 1;
-                min-width: 24px;
-                position: relative;
-                background: linear-gradient(90deg, #21485e, #6ce6ff);
-                overflow: hidden;
-            }
-
-            .journey-path::after {
-                content: "";
-                position: absolute;
-                top: -2px;
-                left: -20%;
-                width: 18%;
-                height: 5px;
-                background: #d5f9ff;
-                box-shadow: 0 0 12px #57d8ff;
-                animation: travel 2.4s linear infinite;
-            }
-
-            .hero-orbit {
-                width: min(74vw, 660px);
-                height: min(74vw, 660px);
-                position: absolute;
-                left: 50%;
-                top: 48%;
-                border: 1px solid rgba(87, 216, 255, .09);
-                border-radius: 50%;
-                transform: translate(-50%, -50%);
-                box-shadow: inset 0 0 80px rgba(38, 176, 232, .05);
-                pointer-events: none;
-            }
-
-            .hero-orbit::before,
-            .hero-orbit::after {
-                content: "";
-                position: absolute;
-                border: 1px solid rgba(87, 216, 255, .08);
-                border-radius: 50%;
-                inset: 13%;
-            }
-
-            .hero-orbit::after {
-                inset: 27%;
-            }
-
-            .fade-up {
-                animation: fadeUp .8s both;
-            }
-
-            .delay-1 {
-                animation-delay: .12s;
-            }
-
-            .delay-2 {
-                animation-delay: .24s;
-            }
-
-            .delay-3 {
-                animation-delay: .36s;
-            }
-
-            @keyframes fadeUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(18px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            @keyframes pulse {
-                50% {
-                    opacity: .4;
-                    transform: scale(.8);
-                }
-            }
-
-            @keyframes travel {
-                to {
-                    left: 110%;
-                }
-            }
-
-            @media (max-width: 767px) {
-                .hero-stage {
-                    min-height: calc(92 * min(var(--vh, 1vh), 1vh));
-                }
-
-                .architecture-orbit::before {
-                    width: 220px;
-                    height: 220px;
-                }
-
-                .journey-path {
-                    width: 1px;
-                    min-width: 1px;
-                    height: 26px;
-                    flex: none;
-                    background: linear-gradient(#21485e, #6ce6ff);
-                }
-
-                .journey-path::after {
-                    left: -2px;
-                    top: -20%;
-                    width: 5px;
-                    height: 18%;
-                    animation-name: travelVertical;
-                }
-
-                @keyframes travelVertical {
-                    to {
-                        top: 110%;
-                    }
-                }
+            ::-webkit-scrollbar-thumb:hover {
+                background: #00f0ff;
             }
         </style>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
     </head>
 
-    <body data-template-id="__page-root">
-        <div class="page-shell">
-            <canvas id="world-canvas" aria-label="Interactive three-dimensional X-Engine network"></canvas>
-            <div class="atmosphere"></div>
-            <div class="grid-overlay"></div>
-            <header class="fixed left-0 top-0 z-30 w-full px-4 pt-4 sm:px-7">
-                <nav class="canva-menu top-nav mx-auto flex max-w-7xl items-center justify-between rounded-2xl px-4 py-3 sm:px-5" data-template-id="navigation-bar" aria-label="Main navigation"><a class="flex items-center gap-3 no-underline" href="#top" aria-label="X-Engine home"> <span class="mono flex h-7 w-7 items-center justify-center rounded-md border border-cyan-300/70 bg-cyan-300/10 text-xs text-cyan-200">X</span> <span class="canva-text font-semibold tracking-tight" data-template-id="brand-name"></span> </a>
-                    <div class="mono hidden items-center gap-5 text-[10px] lg:flex">
-                        <a class="canva-link nav-link" data-template-id="nav-architecture" href="#architecture"></a> <a class="canva-link nav-link" data-template-id="nav-endpoints" href="#endpoints"></a> <a class="canva-link nav-link" data-template-id="nav-telemetry" href="#telemetry"></a> <a class="canva-link nav-link" data-template-id="nav-github" href="https://github.com" target="_blank" rel="noopener noreferrer"></a>
-                    </div><a class="canva-button mono rounded-lg border border-cyan-300/35 px-3 py-2 text-[10px] transition hover:bg-cyan-300/20" data-template-id="nav-connect" href="#architecture"></a>
-                </nav>
-            </header>
-            <main>
-                <section class="hero-stage px-5 pt-24" id="top">
-                    <div class="hero-orbit"></div>
-                    <div class="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center pt-16 text-center">
-                        <div class="fade-up flex items-center gap-3"><span class="eyebrow-line"></span> <span class="canva-text micro-label text-cyan-200" data-template-id="hero-kicker"></span> <span class="eyebrow-line"></span>
-                        </div>
-                        <h1 class="canva-text fade-up delay-1 mt-5 max-w-3xl font-bold leading-[.94] tracking-[-.055em]" data-template-id="hero-title"></h1>
-                        <p class="canva-text fade-up delay-2 mt-6 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base" data-template-id="hero-copy"></p>
-                        <div class="fade-up delay-3 mt-8 flex flex-col items-center gap-3 sm:flex-row"><a class="canva-button mono inline-flex items-center gap-2 rounded-lg px-5 py-3 text-[11px] font-bold transition hover:brightness-110" data-template-id="hero-primary-cta" href="#architecture"> <i class="h-4 w-4" data-lucide="orbit"></i> </a> <a class="canva-button mono inline-flex items-center gap-2 rounded-lg border border-slate-500/40 px-5 py-3 text-[11px] transition hover:border-cyan-300/60" data-template-id="hero-secondary-cta" href="#endpoints"> <i class="h-4 w-4" data-lucide="activity"></i> </a>
-                        </div>
-                        <aside class="canva-panel glass-panel fade-up delay-3 mt-9 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 rounded-xl px-5 py-3" data-template-id="hero-status-panel" aria-label="X-Engine live status">
-                            <div class="flex items-center gap-2"><span class="status-dot"></span> <span class="canva-text micro-label text-emerald-200" data-template-id="status-online"></span>
-                            </div><span class="hidden h-4 w-px bg-slate-600 sm:block"></span> <span class="canva-text micro-label text-slate-300" data-template-id="status-nodes"></span> <span class="hidden h-4 w-px bg-slate-600 sm:block"></span> <span class="canva-text micro-label text-slate-300" data-template-id="status-endpoints"></span>
-                        </aside>
-                        <div class="canva-panel glass-panel fade-up delay-3 mt-5 flex flex-wrap items-center justify-center gap-2 rounded-xl p-2" data-template-id="scene-control-panel"><button class="canva-button mono rounded-lg px-3 py-2 text-[10px] transition hover:bg-cyan-300/15" id="scene-pause" data-template-id="scene-pause-button" type="button"> <i class="mr-1 inline h-3.5 w-3.5" data-lucide="pause"></i> </button> <button class="canva-button mono rounded-lg border border-slate-600/60 px-3 py-2 text-[10px] transition hover:border-cyan-300/60" id="scene-reset" data-template-id="scene-reset-button" type="button"> <i class="mr-1 inline h-3.5 w-3.5" data-lucide="rotate-ccw"></i> </button> <span class="mono px-2 text-[9px] tracking-[.13em] text-cyan-100/65" id="focus-readout" aria-live="polite">TOPOLOGY / GLOBAL MESH</span>
-                        </div>
-                    </div>
-                </section>
-                <section class="relative px-5 py-24 sm:py-32" id="architecture">
-                    <div class="mx-auto max-w-6xl">
-                        <div class="section-rule"></div>
-                        <div class="mt-12 flex flex-col justify-between gap-8 md:flex-row md:items-end">
-                            <div>
-                                <p class="canva-text micro-label text-cyan-300" data-template-id="architecture-kicker"></p>
-                                <h2 class="canva-text mt-3 max-w-xl font-bold tracking-[-.045em]" data-template-id="architecture-title"></h2>
-                            </div>
-                            <p class="canva-text max-w-md text-sm leading-6 text-slate-400" data-template-id="architecture-copy"></p>
-                        </div>
-                        <div class="canva-panel glass-panel architecture-orbit mt-12 rounded-2xl p-5 sm:p-10" data-template-id="architecture-map">
-                            <div class="relative z-10 grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-10">
-                                <div class="space-y-3 text-center md:text-right"><button class="route-card depth-card mono w-full rounded-lg px-4 py-3 text-center text-xs text-slate-200 md:text-right" data-focus="apps" type="button"><span class="canva-text" data-template-id="arch-apps"></span></button> <button class="route-card depth-card mono w-full rounded-lg px-4 py-3 text-center text-xs text-slate-200 md:text-right" data-focus="hub" type="button"><span class="canva-text" data-template-id="arch-hub"></span></button> <button class="route-card depth-card mono w-full rounded-lg px-4 py-3 text-center text-xs text-slate-200 md:text-right" data-focus="guard" type="button"><span class="canva-text" data-template-id="arch-guard"></span></button>
-                                </div>
-                                <div class="hub-core mx-auto flex h-36 w-36 flex-col items-center justify-center rounded-full text-center"><span class="mono text-[10px] tracking-[.2em] text-cyan-200">CORE-X</span> <span class="canva-text mono mt-1 text-sm font-bold" data-template-id="architecture-engine"></span> <span class="mt-2 h-1.5 w-1.5 rounded-full bg-cyan-200 shadow-[0_0_12px_#57d8ff]"></span>
-                                </div>
-                                <div class="space-y-3 text-center md:text-left"><button class="route-card depth-card mono w-full rounded-lg px-4 py-3 text-center text-xs text-slate-200 md:text-left" data-focus="database" type="button"><span class="canva-text" data-template-id="arch-database"></span></button> <button class="route-card depth-card mono w-full rounded-lg px-4 py-3 text-center text-xs text-slate-200 md:text-left" data-focus="api" type="button"><span class="canva-text" data-template-id="arch-api"></span></button> <button class="route-card depth-card mono w-full rounded-lg px-4 py-3 text-center text-xs text-slate-200 md:text-left" data-focus="nodes" type="button"><span class="canva-text" data-template-id="arch-nodes"></span></button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-7 grid gap-4 md:grid-cols-4">
-                            <article class="canva-card glass-panel depth-card rounded-xl p-5" data-template-id="cap-route-card">
-                                <p class="canva-text mono text-xs font-bold text-cyan-200" data-template-id="cap-route-title"></p>
-                                <p class="canva-text mt-3 text-sm leading-6 text-slate-400" data-template-id="cap-route-copy"></p>
-                            </article>
-                            <article class="canva-card glass-panel depth-card rounded-xl p-5" data-template-id="cap-validate-card">
-                                <p class="canva-text mono text-xs font-bold text-cyan-200" data-template-id="cap-validate-title"></p>
-                                <p class="canva-text mt-3 text-sm leading-6 text-slate-400" data-template-id="cap-validate-copy"></p>
-                            </article>
-                            <article class="canva-card glass-panel depth-card rounded-xl p-5" data-template-id="cap-sync-card">
-                                <p class="canva-text mono text-xs font-bold text-cyan-200" data-template-id="cap-sync-title"></p>
-                                <p class="canva-text mt-3 text-sm leading-6 text-slate-400" data-template-id="cap-sync-copy"></p>
-                            </article>
-                            <article class="canva-card glass-panel depth-card rounded-xl p-5" data-template-id="cap-observe-card">
-                                <p class="canva-text mono text-xs font-bold text-cyan-200" data-template-id="cap-observe-title"></p>
-                                <p class="canva-text mt-3 text-sm leading-6 text-slate-400" data-template-id="cap-observe-copy"></p>
-                            </article>
-                        </div>
-                    </div>
-                </section>
-                <section class="relative border-t border-slate-800/80 px-5 py-24 sm:py-32" id="endpoints">
-                    <div class="mx-auto max-w-6xl">
-                        <div class="grid gap-10 lg:grid-cols-[.78fr_1.22fr] lg:items-end">
-                            <div>
-                                <p class="canva-text micro-label text-cyan-300" data-template-id="endpoint-kicker"></p>
-                                <h2 class="canva-text mt-3 font-bold tracking-[-.045em]" data-template-id="endpoint-title"></h2>
-                                <p class="canva-text mt-4 max-w-sm text-sm leading-6 text-slate-400" data-template-id="endpoint-copy"></p>
-                            </div>
-                            <aside class="canva-panel glass-panel rounded-xl p-5" data-template-id="endpoint-detail-panel">
-                                <div class="flex items-center justify-between border-b border-slate-700/70 pb-3"><span class="canva-text mono text-[10px] text-slate-500" data-template-id="request-label"></span> <span class="mono flex items-center gap-2 text-[10px] text-emerald-300"><span class="status-dot"></span><span id="request-state">CONNECTED</span></span>
-                                </div>
-                                <div class="mt-4 flex flex-wrap items-center justify-between gap-3"><span class="mono text-sm text-cyan-200" id="active-endpoint">GET /api/v1/nodes</span> <span class="mono text-[10px] text-slate-400" id="active-latency">14ms P95</span>
-                                </div>
-                                <div class="mono mt-4 grid grid-cols-3 gap-3 text-[9px] text-slate-500">
-                                    <div>
-                                        <span class="block text-slate-200" id="active-requests">42.8K</span>REQUESTS
-                                    </div>
-                                    <div>
-                                        <span class="block text-slate-200" id="active-target">NODEPULSE</span>TARGET
-                                    </div>
-                                    <div>
-                                        <span class="block text-emerald-300">200 OK</span>RESPONSE
-                                    </div>
-                                </div>
-                            </aside>
-                        </div>
-                        <div class="mt-9 grid gap-3 sm:grid-cols-2 md:grid-cols-5"><button class="endpoint-card depth-card is-selected glass-panel rounded-xl p-4 text-left focus:outline-none focus:ring-2 focus:ring-cyan-300" data-endpoint="0" type="button"><span class="mono text-[10px] text-cyan-200">GET</span><span class="mono mt-2 block text-[10px] text-slate-200">/api/v1/nodes</span><span class="mono mt-5 flex justify-between text-[9px] text-slate-500"><span>LIVE</span><span>14ms</span></span></button> <button class="endpoint-card depth-card glass-panel rounded-xl p-4 text-left focus:outline-none focus:ring-2 focus:ring-cyan-300" data-endpoint="1" type="button"><span class="mono text-[10px] text-blue-300">POST</span><span class="mono mt-2 block text-[10px] text-slate-200">/api/v1/route</span><span class="mono mt-5 flex justify-between text-[9px] text-slate-500"><span>LIVE</span><span>22ms</span></span></button> <button class="endpoint-card depth-card glass-panel rounded-xl p-4 text-left focus:outline-none focus:ring-2 focus:ring-cyan-300" data-endpoint="2" type="button"><span class="mono text-[10px] text-violet-300">AUTH</span><span class="mono mt-2 block text-[10px] text-slate-200">/api/v1/verify</span><span class="mono mt-5 flex justify-between text-[9px] text-slate-500"><span>SECURE</span><span>18ms</span></span></button> <button class="endpoint-card depth-card glass-panel rounded-xl p-4 text-left focus:outline-none focus:ring-2 focus:ring-cyan-300" data-endpoint="3" type="button"><span class="mono text-[10px] text-emerald-300">SYNC</span><span class="mono mt-2 block text-[10px] text-slate-200">/api/v1/mesh</span><span class="mono mt-5 flex justify-between text-[9px] text-slate-500"><span>SYNCED</span><span>31ms</span></span></button> <button class="endpoint-card depth-card glass-panel rounded-xl p-4 text-left focus:outline-none focus:ring-2 focus:ring-cyan-300" data-endpoint="4" type="button"><span class="mono text-[10px] text-amber-200">NODE</span><span class="mono mt-2 block text-[10px] text-slate-200">/api/v1/pulse</span><span class="mono mt-5 flex justify-between text-[9px] text-slate-500"><span>READY</span><span>11ms</span></span></button>
-                        </div>
-                    </div>
-                </section>
-                <section class="relative px-5 pb-24 sm:pb-32" id="telemetry">
-                    <div class="canva-panel glass-panel mx-auto max-w-6xl rounded-2xl p-6 sm:p-9" data-template-id="journey-panel">
-                        <div class="flex items-center justify-between gap-4">
-                            <p class="canva-text mono text-xs font-bold text-cyan-100" data-template-id="journey-title"></p><span class="canva-text mono text-[9px] text-slate-500" data-template-id="journey-status"></span>
-                        </div>
-                        <div class="mt-8 flex flex-col items-center justify-between gap-3 md:flex-row md:gap-0">
-                            <div class="text-center">
-                                <i class="mx-auto h-5 w-5 text-slate-300" data-lucide="monitor-up"></i><span class="canva-text mono mt-2 block text-[9px] text-slate-400" data-template-id="journey-client"></span>
-                            </div><span class="journey-path"></span>
-                            <div class="text-center">
-                                <i class="mx-auto h-5 w-5 text-slate-300" data-lucide="brackets"></i><span class="canva-text mono mt-2 block text-[9px] text-slate-400" data-template-id="journey-endpoint"></span>
-                            </div><span class="journey-path"></span>
-                            <div class="text-center">
-                                <i class="mx-auto h-5 w-5 text-cyan-200" data-lucide="hexagon"></i><span class="canva-text mono mt-2 block text-[9px] text-cyan-200" data-template-id="journey-engine"></span>
-                            </div><span class="journey-path"></span>
-                            <div class="text-center">
-                                <i class="mx-auto h-5 w-5 text-slate-300" data-lucide="shield-check"></i><span class="canva-text mono mt-2 block text-[9px] text-slate-400" data-template-id="journey-validator"></span>
-                            </div><span class="journey-path"></span>
-                            <div class="text-center">
-                                <i class="mx-auto h-5 w-5 text-slate-300" data-lucide="git-fork"></i><span class="canva-text mono mt-2 block text-[9px] text-slate-400" data-template-id="journey-router"></span>
-                            </div><span class="journey-path"></span>
-                            <div class="text-center">
-                                <i class="mx-auto h-5 w-5 text-slate-300" data-lucide="server"></i><span class="canva-text mono mt-2 block text-[9px] text-slate-400" data-template-id="journey-node"></span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </main>
-            <footer class="canva-footer border-t border-slate-800/80 px-5 py-8" data-template-id="footer-panel">
-                <div class="mx-auto flex max-w-6xl flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                    <p class="canva-text mono text-[10px] text-slate-500" data-template-id="footer-copy"></p>
-                    <p class="canva-text mono text-[10px] text-cyan-200" data-template-id="footer-status"></p>
-                </div>
-            </footer>
+    <body class="bg-grid bg-core-bg selection:bg-core-cyan min-h-screen overflow-x-hidden selection:text-black" x-data="coreDocsApp()" @keydown.window.prevent.ctrl.k="searchOpen = true" @keydown.window.prevent.meta.k="searchOpen = true" @keydown.escape.window="searchOpen = false">
+
+        <div class="fixed bottom-6 right-6 z-50 transform transition-all duration-300" x-show="toastVisible" x-transition:enter="translate-y-2 opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="opacity-0">
+            <div class="glass-panel glow-cyan border-core-cyan/40 text-core-cyan flex items-center space-x-3 rounded-lg border px-4 py-3">
+                <svg class="text-core-cyan h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-sm font-medium text-white" x-text="toastMessage"></span>
+            </div>
         </div>
+
+        <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/80 px-4 pt-20 backdrop-blur-md" x-show="searchOpen" x-transition.opacity @click.self="searchOpen = false">
+            <div class="glass-panel glow-cyan-lg border-core-cyan/40 w-full max-w-2xl overflow-hidden rounded-xl border shadow-2xl" @click.stop>
+                <div class="border-core-border flex items-center border-b px-4 py-3">
+                    <svg class="text-core-cyan mr-3 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input class="w-full bg-transparent text-sm font-medium text-white placeholder-slate-500 focus:outline-none" type="text" x-model="searchQuery" placeholder="Search documentation, APIs, SDKs, or error codes..." autofocus x-ref="searchInput">
+                    <span class="border-core-border rounded border bg-slate-900 px-2 py-1 text-xs text-slate-500">ESC</span>
+                </div>
+                <div class="max-h-96 space-y-1 overflow-y-auto p-2">
+                    <template x-for="result in filteredSearchResults" :key="result.id">
+                        <button class="group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-cyan-500/10" @click="navigateTo(result.id); searchOpen = false; searchQuery=''">
+                            <div>
+                                <div class="group-hover:text-core-cyan flex items-center space-x-2 text-sm font-medium text-white">
+                                    <span class="border-core-border rounded border bg-slate-800 px-1.5 py-0.5 text-xs text-slate-400" x-text="result.category"></span>
+                                    <span x-text="result.title"></span>
+                                </div>
+                                <p class="mt-0.5 max-w-lg truncate text-xs text-slate-400" x-text="result.excerpt"></p>
+                            </div>
+                            <svg class="group-hover:text-core-cyan h-4 w-4 shrink-0 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </template>
+                    <div class="py-8 text-center text-sm text-slate-500" x-show="filteredSearchResults.length === 0">
+                        No matching documentation found for "<span x-text="searchQuery"></span>"
+                    </div>
+                </div>
+                <div class="border-core-border flex items-center justify-between border-t bg-slate-950/80 px-4 py-2 text-xs text-slate-500">
+                    <span>Tip: Use <kbd class="rounded bg-slate-800 px-1 py-0.5 text-slate-300">↑</kbd> <kbd class="rounded bg-slate-800 px-1 py-0.5 text-slate-300">↓</kbd> to navigate</span>
+                    <span class="text-core-cyan font-mono">X-Engine v1.0</span>
+                </div>
+            </div>
+        </div>
+
+        <header class="glass-panel border-core-border sticky top-0 z-40 w-full border-b backdrop-blur-xl">
+            <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+                <!-- Brand & Logo -->
+                <div class="flex items-center space-x-4">
+                    <button class="hover:text-core-cyan p-1 text-slate-400 md:hidden" @click="mobileSidebarOpen = !mobileSidebarOpen">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    <div class="flex cursor-pointer items-center space-x-3" @click="navigateTo('overview')">
+                        <div class="glow-cyan flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600" style="background-image: url('/logo.png'); background-size: cover; background-repeat: no-repeat;">
+                            {{-- <span class="text-lg font-extrabold text-black">CX</span> --}}
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-base font-bold tracking-wider text-white">X-Engine v1.0</span>
+                                <span class="border-core-cyan/30 text-core-cyan rounded border bg-cyan-500/10 px-1.5 py-0.5 font-mono text-[10px] uppercase">Docs</span>
+                            </div>
+                            <p class="font-mono text-[10px] tracking-tight text-slate-400">ALmax Cloud Web OS Engine</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search bar trigger & Version selector -->
+                <div class="flex items-center space-x-4">
+                    <button class="border-core-border hover:border-core-cyan/50 hidden w-64 items-center space-x-3 rounded-lg border bg-slate-900/80 px-3 py-1.5 text-xs text-slate-400 transition-all sm:flex" @click="searchOpen = true">
+                        <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <span class="flex-1 text-left">Search docs...</span>
+                        <kbd class="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">⌘K</kbd>
+                    </button>
+
+                    <!-- Version Selector -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button class="border-core-border hover:border-core-cyan/40 flex items-center space-x-2 rounded-lg border bg-slate-900/80 px-3 py-1.5 font-mono text-xs text-slate-300" @click="open = !open">
+                            <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-400"></span>
+                            <span>v1.0</span>
+                            <svg class="h-3.5 w-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="glass-panel border-core-border absolute right-0 z-50 mt-2 w-48 rounded-lg border py-1 text-xs shadow-xl" x-show="open" @click.outside="open = false">
+                            <a class="text-core-cyan block px-4 py-2 font-mono hover:bg-cyan-500/10" href="#" @click.prevent="open = false; showToast('Switched to v1.0')">v1.0 (Stable)</a>
+                            {{-- <a class="block px-4 py-2 font-mono text-slate-300 hover:bg-cyan-500/10" href="#" @click.prevent="open = false; showToast('Switched to v2.6.0-BETA')">v2.6.0-BETA</a> --}}
+                            {{-- <a class="block px-4 py-2 font-mono text-slate-300 hover:bg-cyan-500/10" href="#" @click.prevent="open = false; showToast('Switched to v2.4.2')">v2.4.2 (Legacy)</a> --}}
+                        </div>
+                    </div>
+
+                    <a class="bg-core-cyan hidden items-center rounded-lg px-3 py-1.5 text-xs font-semibold text-black shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-colors hover:bg-cyan-400 md:inline-flex" href="#playground" @click.prevent="navigateTo('api-playground')">
+                        API Playground
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="mx-auto flex max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+
+            <!-- Mobile Sidebar Backdrop -->
+            <div class="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm md:hidden" x-show="mobileSidebarOpen" @click="mobileSidebarOpen = false"></div>
+
+            <aside class="border-core-border bg-core-bg fixed bottom-0 left-0 top-16 z-50 w-72 shrink-0 space-y-6 overflow-y-auto border-r p-6 transition-transform duration-300 md:top-auto md:z-0 md:translate-x-0 md:border-0 md:bg-transparent" :class="mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+
+                <!-- Quick Navigation Menu -->
+                <div class="space-y-6">
+                    <template x-for="category in categories" :key="category.name">
+                        <div>
+                            <h3 class="mb-2 flex items-center justify-between font-mono text-xs uppercase tracking-wider text-slate-400">
+                                <span x-text="category.name"></span>
+                                <span class="bg-core-cyan/40 h-1.5 w-1.5 rounded-full"></span>
+                            </h3>
+                            <ul class="border-core-border/60 ml-1 space-y-1 border-l pl-3">
+                                <template x-for="item in category.items" :key="item.id">
+                                    <li>
+                                        <button class="group flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-all" @click="navigateTo(item.id); mobileSidebarOpen = false" :class="activeDocId === item.id ? 'text-core-cyan font-semibold bg-cyan-500/10 border-l-2 border-core-cyan -ml-[13px] pl-[11px]' : 'text-slate-400 hover:text-white hover:bg-slate-900/50'">
+                                            <span x-text="item.title"></span>
+                                            <span class="py-0.2 rounded border border-slate-700 bg-slate-800 px-1 font-mono text-[9px] text-slate-300" x-show="item.badge" x-text="item.badge"></span>
+                                        </button>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- SDK Download Banner in Sidebar -->
+                <div class="glass-panel border-core-cyan/30 relative overflow-hidden rounded-xl border p-4 text-left">
+                    <div class="absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-cyan-500/10 blur-xl"></div>
+                    <h4 class="mb-1 text-xs font-semibold text-white">Core-X CLI & SDK v1.0</h4>
+                    <p class="mb-3 text-[11px] text-slate-400">Install our enterprise developer toolkit via npm or pip.</p>
+                    <div class="border-core-border text-core-cyan flex items-center justify-between rounded border bg-black/80 p-2 font-mono text-[10px]">
+                        <span>npm i -g @almaxcloud/core-x</span>
+                        <button class="text-slate-400 hover:text-white" @click="copyText('npm i -g @almaxcloud/core-x')">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="min-w-0 flex-1 md:ml-8 lg:ml-12">
+
+                <!-- Breadcrumbs -->
+                <div class="mb-6 flex items-center space-x-2 font-mono text-xs text-slate-500">
+                    <span class="hover:text-core-cyan cursor-pointer" @click="navigateTo('overview')">Docs</span>
+                    <span>/</span>
+                    <span class="text-slate-400" x-text="currentCategoryName"></span>
+                    <span>/</span>
+                    <span class="text-core-cyan" x-text="currentDocTitle"></span>
+                </div>
+
+                <div class="animate-fadeIn space-y-8" x-show="activeDocId === 'overview'">
+                    <div class="border-core-border border-b pb-6">
+                        <div class="border-core-cyan/30 text-core-cyan mb-4 inline-flex items-center space-x-2 rounded-full border bg-cyan-500/10 px-2.5 py-1 font-mono text-xs">
+                            <span class="bg-core-cyan h-1.5 w-1.5 animate-ping rounded-full"></span>
+                            <span>Core-X OS Engine v2.5</span>
+                        </div>
+                        <h1 class="mb-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Core-X Developer Documentation</h1>
+                        <p class="text-sm leading-relaxed text-slate-400 sm:text-base">
+                            Welcome to the official developer portal for <strong>Core-X</strong>, ALmax Cloud's proprietary Web OS for business operations. Build immersive business applications, daemon services, windowed applets, and real-time state synchronization modules on top of our secure kernel architecture.
+                        </p>
+                    </div>
+
+                    <!-- Feature Grid -->
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="glass-panel border-core-border hover:border-core-cyan/50 group cursor-pointer rounded-xl border p-5 transition-all" @click="navigateTo('quickstart')">
+                            <div class="border-core-cyan/30 text-core-cyan mb-4 flex h-10 w-10 items-center justify-center rounded-lg border bg-cyan-500/10 transition-transform group-hover:scale-110">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="group-hover:text-core-cyan mb-1 text-base font-bold text-white transition-colors">5-Minute Quickstart</h3>
+                            <p class="text-xs text-slate-400">Initialize your first Core-X Web OS container, authenticate via OAuth 2.1, and launch a window applet.</p>
+                        </div>
+                        <div class="glass-panel border-core-border hover:border-core-cyan/50 group cursor-pointer rounded-xl border p-5 transition-all" @click="navigateTo('windows-api')">
+                            <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-400 transition-transform group-hover:scale-110">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="group-hover:text-core-cyan mb-1 text-base font-bold text-white transition-colors">Windows & Applets API</h3>
+                            <p class="text-xs text-slate-400">Control desktop hierarchy, tiling layouts, virtual viewports, and inter-process messaging.</p>
+                        </div>
+                    </div>
+
+                    <!-- Code Example Box -->
+                    <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
+                        <div class="border-core-border flex items-center justify-between border-b bg-slate-950 px-4 py-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="h-3 w-3 rounded-full bg-rose-500/80"></span>
+                                <span class="h-3 w-3 rounded-full bg-amber-500/80"></span>
+                                <span class="h-3 w-3 rounded-full bg-emerald-500/80"></span>
+                                <span class="ml-2 font-mono text-xs text-slate-400">initialize-kernel.js</span>
+                            </div>
+                            <!-- Language Tabs -->
+                            <div class="flex space-x-1">
+                                <button class="rounded px-2.5 py-1 font-mono text-[11px] transition-colors" @click="selectedLanguage = 'javascript'" :class="selectedLanguage === 'javascript' ? 'bg-core-cyan text-black font-semibold' : 'bg-slate-900 text-slate-400 hover:text-white'">JS/TS</button>
+                                <button class="rounded px-2.5 py-1 font-mono text-[11px] transition-colors" @click="selectedLanguage = 'python'" :class="selectedLanguage === 'python' ? 'bg-core-cyan text-black font-semibold' : 'bg-slate-900 text-slate-400 hover:text-white'">Python</button>
+                                <button class="rounded px-2.5 py-1 font-mono text-[11px] transition-colors" @click="selectedLanguage = 'curl'" :class="selectedLanguage === 'curl' ? 'bg-core-cyan text-black font-semibold' : 'bg-slate-900 text-slate-400 hover:text-white'">cURL</button>
+                            </div>
+                        </div>
+                        <div class="group relative overflow-x-auto bg-black/90 p-4 font-mono text-xs text-slate-300">
+                            <button class="absolute right-3 top-3 flex items-center space-x-1.5 rounded border border-slate-700 bg-slate-800 px-2.5 py-1 text-[10px] text-slate-300 transition-colors hover:bg-slate-700" @click="copySnippet()">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                                </svg>
+                                <span>Copy</span>
+                            </button>
+                            <pre x-show="selectedLanguage === 'javascript'"><span class="text-purple-400">import</span> { CoreXKernel } <span class="text-purple-400">from</span> <span class="text-emerald-300">'@almax/core-x'</span>;
+
+<span class="text-slate-500">// Initialize secure Core-X OS session</span>
+<span class="text-blue-400">const</span> kernel = <span class="text-purple-400">new</span> <span class="text-yellow-300">CoreXKernel</span>({
+    clientId: <span class="text-emerald-300">'cx_live_99a8fbc21'</span>,
+    region: <span class="text-emerald-300">'us-east-almax'</span>,
+    mode: <span class="text-emerald-300">'secure-sandbox'</span>
+});
+
+<span class="text-blue-400">await</span> kernel.<span class="text-yellow-300">boot</span>();
+console.<span class="text-yellow-300">log</span>(<span class="text-emerald-300">`Core-X OS booted successfully. Kernel ID: ${kernel.sessionId}`</span>);</pre>
+
+                            <pre style="display: none;" x-show="selectedLanguage === 'python'"><span class="text-purple-400">import</span> os
+<span class="text-purple-400">from</span> almax_core_x <span class="text-purple-400">import</span> CoreXKernel
+
+<span class="text-slate-500"># Initialize Core-X SDK instance</span>
+kernel = CoreXKernel(
+    client_id=os.getenv(<span class="text-emerald-300">"CORE_X_CLIENT_ID"</span>),
+    region=<span class="text-emerald-300">"us-east-almax"</span>
+)
+
+kernel.boot()
+print(f<span class="text-emerald-300">"Connected to Core-X Daemon. Status: {kernel.status}"</span>)</pre>
+
+                            <pre style="display: none;" x-show="selectedLanguage === 'curl'"><span class="text-slate-500"># Authenticate and initialize Core-X OS session</span>
+curl -X POST https://api.core-x.almaxcloud.com/v1/kernel/boot \
+  -H <span class="text-emerald-300">"Authorization: Bearer cx_pat_secret_998127"</span> \
+  -H <span class="text-emerald-300">"Content-Type: application/json"</span> \
+  -d <span class="text-emerald-300">'{"region": "us-east-almax", "client_version": "2.5.0"}'</span></pre>
+                        </div>
+                    </div>
+
+                    <!-- Next Steps Footer -->
+                    <div class="border-core-border flex items-center justify-between border-t pt-6">
+                        <span class="text-xs text-slate-500">Last updated: October 2026</span>
+                        <button class="text-core-cyan flex items-center space-x-2 text-xs font-semibold hover:underline" @click="navigateTo('quickstart')">
+                            <span>Next: 5-Minute Quickstart Guide</span>
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'quickstart'">
+                    <div class="border-core-border border-b pb-6">
+                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Getting Started</span>
+                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">5-Minute Quickstart Guide</h1>
+                        <p class="text-sm text-slate-400">Follow this step-by-step guide to integrate Core-X into your enterprise workflow.</p>
+                    </div>
+
+                    <div class="space-y-6 text-sm text-slate-300">
+                        <div class="flex items-start space-x-4">
+                            <div class="border-core-cyan/40 text-core-cyan flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-cyan-500/10 font-mono font-bold">1</div>
+                            <div>
+                                <h3 class="mb-1 font-bold text-white">Obtain API Credentials</h3>
+                                <p class="text-xs leading-relaxed text-slate-400">Log into your <a class="text-core-cyan underline" href="#">ALmax Cloud Dashboard</a>, navigate to Core-X Settings, and generate a Personal Access Token (PAT) with <code class="text-core-cyan font-mono">os:kernel:write</code> scope.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-4">
+                            <div class="border-core-cyan/40 text-core-cyan flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-cyan-500/10 font-mono font-bold">2</div>
+                            <div>
+                                <h3 class="mb-1 font-bold text-white">Install the Core-X SDK</h3>
+                                <p class="mb-3 text-xs text-slate-400">Install the official Node.js client package in your terminal:</p>
+                                <div class="border-core-border text-core-cyan flex items-center justify-between rounded-lg border bg-black/90 p-3 font-mono text-xs">
+                                    <span>npm install @almax/core-x</span>
+                                    <button class="text-xs text-slate-400 hover:text-white" @click="copyText('npm install @almax/core-x')">Copy</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-4">
+                            <div class="border-core-cyan/40 text-core-cyan flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-cyan-500/10 font-mono font-bold">3</div>
+                            <div>
+                                <h3 class="mb-1 font-bold text-white">Spawn Your First Window Applet</h3>
+                                <p class="mb-3 text-xs text-slate-400">Create a script to render a managed business window inside the Core-X workspace:</p>
+                                <div class="border-core-border rounded-lg border bg-black/90 p-4 font-mono text-xs text-slate-300">
+                                    <span class="text-purple-400">const</span> applet = <span class="text-blue-400">await</span> kernel.windows.<span class="text-yellow-300">create</span>({<br>
+                                    &nbsp;&nbsp;title: <span class="text-emerald-300">'Q3 Financial Analyzer'</span>,<br>
+                                    &nbsp;&nbsp;width: <span class="text-orange-400">1200</span>,<br>
+                                    &nbsp;&nbsp;height: <span class="text-orange-400">800</span>,<br>
+                                    &nbsp;&nbsp;url: <span class="text-emerald-300">'https://apps.almaxcloud.com/finance'</span><br>
+                                    });<br>
+                                    applet.<span class="text-yellow-300">mount</span>();
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer navigation -->
+                    <div class="border-core-border flex items-center justify-between border-t pt-6">
+                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('overview')">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            <span>Previous: Overview</span>
+                        </button>
+                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('auth')">
+                            <span>Next: Authentication & Security</span>
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'auth'">
+                    <div class="border-core-border border-b pb-6">
+                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Security</span>
+                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Authentication & OAuth 2.1</h1>
+                        <p class="text-sm text-slate-400">Core-X enforces strict cryptographic verification and token-based authentication for all daemon requests.</p>
+                    </div>
+
+                    <div class="space-y-4 text-sm text-slate-300">
+                        <h3 class="text-lg font-bold text-white">Bearer Token Header</h3>
+                        <p class="text-xs text-slate-400">Every API request directed at Core-X must include the Authorization header with an active Personal Access Token (PAT) or Session JWT.</p>
+
+                        <div class="border-core-border rounded-lg border bg-black/90 p-4 font-mono text-xs text-slate-300">
+                            Authorization: Bearer cx_pat_live_88fbc71902a...
+                        </div>
+
+                        <div class="glass-panel space-y-1 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-200">
+                            <div class="flex items-center space-x-2 font-bold">
+                                <svg class="h-4 w-4 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                                <span>Security Warning</span>
+                            </div>
+                            <p class="text-slate-300">Never expose your master secret keys or service tokens in client-side Single Page Applications. Use ALmax Secure Proxy or Server-Side Rendering (SSR) for sensitive operations.</p>
+                        </div>
+                    </div>
+
+                    <div class="border-core-border flex items-center justify-between border-t pt-6">
+                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('quickstart')">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            <span>Previous: Quickstart</span>
+                        </button>
+                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('windows-api')">
+                            <span>Next: Windows API</span>
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'windows-api'">
+                    <div class="border-core-border border-b pb-6">
+                        <div class="mb-2 flex items-center space-x-3">
+                            <span class="rounded border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 font-mono text-xs font-bold text-emerald-400">POST</span>
+                            <span class="font-mono text-xs text-slate-400">/v1/os/windows</span>
+                        </div>
+                        <h1 class="mb-2 text-3xl font-extrabold text-white">Create Window Applet</h1>
+                        <p class="text-sm text-slate-400">Spawns a new secure window frame inside the Core-X Web OS workspace grid.</p>
+                    </div>
+
+                    <!-- Endpoint Parameters Table -->
+                    <div class="space-y-4">
+                        <h3 class="font-mono text-sm font-bold uppercase tracking-wider text-white">Request Parameters</h3>
+                        <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
+                            <table class="w-full text-left text-xs">
+                                <thead class="border-core-border border-b bg-slate-950 font-mono text-slate-400">
+                                    <tr>
+                                        <th class="p-3">Parameter</th>
+                                        <th class="p-3">Type</th>
+                                        <th class="p-3">Required</th>
+                                        <th class="p-3">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-core-border divide-y text-slate-300">
+                                    <tr>
+                                        <td class="text-core-cyan p-3 font-mono">title</td>
+                                        <td class="p-3 font-mono text-slate-400">string</td>
+                                        <td class="p-3"><span class="text-emerald-400">Yes</span></td>
+                                        <td class="p-3">The window title displayed in the titlebar.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-core-cyan p-3 font-mono">width</td>
+                                        <td class="p-3 font-mono text-slate-400">integer</td>
+                                        <td class="p-3"><span class="text-slate-500">No</span></td>
+                                        <td class="p-3">Initial window width in pixels (Default: 960).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-core-cyan p-3 font-mono">height</td>
+                                        <td class="p-3 font-mono text-slate-400">integer</td>
+                                        <td class="p-3"><span class="text-slate-500">No</span></td>
+                                        <td class="p-3">Initial window height in pixels (Default: 640).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-core-cyan p-3 font-mono">url</td>
+                                        <td class="p-3 font-mono text-slate-400">string</td>
+                                        <td class="p-3"><span class="text-emerald-400">Yes</span></td>
+                                        <td class="p-3">Secure iframe source URL for the applet content.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="border-core-border flex items-center justify-between border-t pt-6">
+                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('auth')">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            <span>Previous: Authentication</span>
+                        </button>
+                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('api-playground')">
+                            <span>Next: Interactive API Playground</span>
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="animate-fadeIn space-y-8" id="playground" style="display: none;" x-show="activeDocId === 'api-playground'">
+                    <div class="border-core-border border-b pb-6">
+                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Interactive Sandbox</span>
+                        <h1 class="mb-2 mt-1 text-3xl font-extrabold text-white">Core-X API Playground</h1>
+                        <p class="text-sm text-slate-400">Test Core-X OS endpoints in real-time. Simulated responses replicate live ALmax Cloud daemon behavior.</p>
+                    </div>
+
+                    <!-- Playground Interface Grid -->
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <!-- Request Panel -->
+                        <div class="glass-panel border-core-border space-y-4 rounded-xl border p-5">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-mono text-sm font-bold uppercase tracking-wider text-white">Request Configuration</h3>
+                                <span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] text-emerald-400">Mock Sandbox Active</span>
+                            </div>
+
+                            <!-- Method & URL Selector -->
+                            <div class="flex space-x-2">
+                                <select class="border-core-border text-core-cyan rounded-lg border bg-slate-900 px-3 py-2 font-mono text-xs focus:outline-none" x-model="playgroundMethod">
+                                    <option>GET</option>
+                                    <option>POST</option>
+                                    <option>PUT</option>
+                                    <option>DELETE</option>
+                                </select>
+                                <input class="border-core-border flex-1 rounded-lg border bg-slate-900 px-3 py-2 font-mono text-xs text-slate-200 focus:outline-none" type="text" x-model="playgroundUrl">
+                            </div>
+
+                            <!-- Payload JSON Editor -->
+                            <div>
+                                <label class="mb-1.5 block font-mono text-xs text-slate-400">Request Payload (JSON)</label>
+                                <textarea class="border-core-border focus:border-core-cyan/50 w-full rounded-lg border bg-slate-950 p-3 font-mono text-xs text-slate-200 focus:outline-none" x-model="playgroundParams" rows="6"></textarea>
+                            </div>
+
+                            <!-- Send Request Button -->
+                            <button class="bg-core-cyan flex w-full items-center justify-center space-x-2 rounded-lg py-2.5 text-xs font-semibold text-black shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-colors hover:bg-cyan-400" @click="sendPlaygroundRequest()">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                </svg>
+                                <span x-text="playgroundLoading ? 'Executing Daemon Request...' : 'Send API Request'"></span>
+                            </button>
+                        </div>
+
+                        <!-- Response Panel -->
+                        <div class="glass-panel border-core-border flex flex-col space-y-4 rounded-xl border p-5">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-mono text-sm font-bold uppercase tracking-wider text-white">Response Payload</h3>
+                                <div class="flex items-center space-x-2 font-mono text-xs" x-show="playgroundResponse">
+                                    <span class="text-emerald-400">200 OK</span>
+                                    <span class="text-slate-500">•</span>
+                                    <span class="text-slate-400">142ms</span>
+                                </div>
+                            </div>
+
+                            <div class="border-core-border max-h-72 flex-1 overflow-y-auto rounded-lg border bg-slate-950 p-4 font-mono text-xs text-slate-300">
+                                <template x-if="playgroundLoading">
+                                    <div class="text-core-cyan flex items-center justify-center space-x-3 py-16">
+                                        <svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                        </svg>
+                                        <span>Communicating with Core-X gateway...</span>
+                                    </div>
+                                </template>
+                                <template x-if="!playgroundLoading && playgroundResponse">
+                                    <pre class="text-core-cyan" x-text="JSON.stringify(playgroundResponse, null, 2)"></pre>
+                                </template>
+                                <template x-if="!playgroundLoading && !playgroundResponse">
+                                    <div class="py-16 text-center text-slate-600">
+                                        Click "Send API Request" to test endpoint execution.
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feedback Control Widget -->
+                    <div class="glass-panel border-core-border mt-8 flex flex-col items-center justify-between gap-4 rounded-xl border p-6 sm:flex-row">
+                        <div>
+                            <h4 class="mb-1 text-sm font-bold text-white">Was this documentation helpful?</h4>
+                            <p class="text-xs text-slate-400">Help us improve the Core-X developer portal experience.</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button class="border-core-border hover:border-core-cyan flex items-center space-x-2 rounded-lg border bg-slate-900 px-4 py-2 text-xs text-slate-300 transition-colors" @click="submitFeedback('positive')">
+                                <svg class="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
+                                </svg>
+                                <span>Yes, extremely</span>
+                            </button>
+                            <button class="border-core-border flex items-center space-x-2 rounded-lg border bg-slate-900 px-4 py-2 text-xs text-slate-300 transition-colors hover:border-rose-500/50" @click="submitFeedback('negative')">
+                                <svg class="h-4 w-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018c.163 0 .326.02.485.06L17 4m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"></path>
+                                </svg>
+                                <span>Needs improvement</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'webhooks'">
+                    <div class="border-core-border border-b pb-6">
+                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Real-Time</span>
+                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Webhooks & Event Subscriptions</h1>
+                        <p class="text-sm text-slate-400">Listen to real-time kernel events, applet state transitions, and user telemetry via secured HTTPS webhooks.</p>
+                    </div>
+
+                    <div class="space-y-4 text-sm text-slate-300">
+                        <h3 class="text-lg font-bold text-white">Event Payload Structure</h3>
+                        <p class="text-xs text-slate-400">All outbound webhook deliveries are signed using HMAC-SHA256 in the <code class="text-core-cyan font-mono">X-CoreX-Signature</code> header.</p>
+
+                        <div class="border-core-border rounded-lg border bg-black/90 p-4 font-mono text-xs text-slate-300">
+                            {<br>
+                            &nbsp;&nbsp;<span class="text-purple-400">"event_id"</span>: <span class="text-emerald-300">"evt_99812739102"</span>,<br>
+                            &nbsp;&nbsp;<span class="text-purple-400">"event_type"</span>: <span class="text-emerald-300">"applet.spawned"</span>,<br>
+                            &nbsp;&nbsp;<span class="text-purple-400">"timestamp"</span>: <span class="text-orange-400">1760601513</span>,<br>
+                            &nbsp;&nbsp;<span class="text-purple-400">"data"</span>: {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">"window_id"</span>: <span class="text-emerald-300">"win_x_8871"</span>,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">"owner"</span>: <span class="text-emerald-300">"usr_almax_admin"</span><br>
+                            &nbsp;&nbsp;}<br>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="border-core-border flex items-center justify-between border-t pt-6">
+                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('api-playground')">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            <span>Previous: API Playground</span>
+                        </button>
+                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('errors')">
+                            <span>Next: Error Codes & Limits</span>
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'errors'">
+                    <div class="border-core-border border-b pb-6">
+                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Troubleshooting</span>
+                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Error Codes & Rate Limits</h1>
+                        <p class="text-sm text-slate-400">Understand Core-X API status codes, rate limit headers, and troubleshooting protocols.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
+                            <table class="w-full text-left text-xs">
+                                <thead class="border-core-border border-b bg-slate-950 font-mono text-slate-400">
+                                    <tr>
+                                        <th class="p-3">Status Code</th>
+                                        <th class="p-3">Error Slug</th>
+                                        <th class="p-3">Description & Resolution</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-core-border divide-y text-slate-300">
+                                    <tr>
+                                        <td class="p-3 font-mono text-amber-400">429 Too Many Requests</td>
+                                        <td class="p-3 font-mono text-slate-300">rate_limit_exceeded</td>
+                                        <td class="p-3 text-slate-400">Exceeded 1,000 req/min threshold. Implement exponential backoff.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 font-mono text-rose-400">401 Unauthorized</td>
+                                        <td class="p-3 font-mono text-slate-300">invalid_token</td>
+                                        <td class="p-3 text-slate-400">Provided PAT or JWT has expired or been revoked in dashboard.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 font-mono text-rose-400">503 Service Unavailable</td>
+                                        <td class="p-3 font-mono text-slate-300">kernel_restart</td>
+                                        <td class="p-3 text-slate-400">Target Core-X daemon container is undergoing rolling cluster update.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="border-core-border flex items-center justify-between border-t pt-6">
+                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('webhooks')">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            <span>Previous: Webhooks</span>
+                        </button>
+                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('overview')">
+                            <span>Back to Overview</span>
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+        @livewireScripts
         <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                lucide.createIcons();
-                initEndpointExplorer();
-                initTiltCards();
-                initWorld();
-            });
+            function coreDocsApp() {
+                return {
+                    activeDocId: 'overview',
+                    searchOpen: false,
+                    searchQuery: '',
+                    mobileSidebarOpen: false,
+                    selectedLanguage: 'javascript',
+                    toastMessage: '',
+                    toastVisible: false,
 
-            function initEndpointExplorer() {
-                const records = [{
-                        method: 'GET',
-                        path: '/api/v1/nodes',
-                        latency: '14ms P95',
-                        requests: '42.8K',
-                        target: 'NODEPULSE'
+                    // Playground State
+                    playgroundMethod: 'POST',
+                    playgroundUrl: 'https://testnet.almaxcloud.com/api/v1/',
+                    playgroundParams: '{\n  "title": "X-Engine v1.0",\n  "width": 1280,\n  "height": 800,\n  "url": "https://api.almaxcloud.com"\n}',
+                    playgroundResponse: null,
+                    playgroundLoading: false,
+
+                    categories: [{
+                            name: 'Getting Started',
+                            items: [{
+                                    id: 'overview',
+                                    title: 'Overview',
+                                    badge: 'v2.5'
+                                },
+                                {
+                                    id: 'quickstart',
+                                    title: '5-Minute Quickstart'
+                                },
+                                {
+                                    id: 'auth',
+                                    title: 'Authentication & Security'
+                                }
+                            ]
+                        },
+                        {
+                            name: 'Core-X APIs',
+                            items: [{
+                                    id: 'windows-api',
+                                    title: 'Windows & Applets API',
+                                    badge: 'POST'
+                                },
+                                {
+                                    id: 'api-playground',
+                                    title: 'Interactive API Playground',
+                                    badge: 'Sandbox'
+                                }
+                            ]
+                        },
+                        {
+                            name: 'Real-Time & Ops',
+                            items: [{
+                                    id: 'webhooks',
+                                    title: 'Webhooks & Events'
+                                },
+                                {
+                                    id: 'errors',
+                                    title: 'Error Codes & Limits'
+                                }
+                            ]
+                        }
+                    ],
+
+                    get currentDocTitle() {
+                        for (const cat of this.categories) {
+                            for (const item of cat.items) {
+                                if (item.id === this.activeDocId) return item.title;
+                            }
+                        }
+                        return 'Overview';
                     },
-                    {
-                        method: 'POST',
-                        path: '/api/v1/route',
-                        latency: '22ms P95',
-                        requests: '18.4K',
-                        target: 'X-HUB'
+
+                    get currentCategoryName() {
+                        for (const cat of this.categories) {
+                            for (const item of cat.items) {
+                                if (item.id === this.activeDocId) return cat.name;
+                            }
+                        }
+                        return 'Getting Started';
                     },
-                    {
-                        method: 'AUTH',
-                        path: '/api/v1/verify',
-                        latency: '18ms P95',
-                        requests: '9.7K',
-                        target: 'X-GUARD'
+
+                    get filteredSearchResults() {
+                        if (!this.searchQuery.trim()) {
+                            return [{
+                                    id: 'overview',
+                                    category: 'Getting Started',
+                                    title: 'Core-X Developer Overview',
+                                    excerpt: 'Official developer portal for Core-X Web OS by ALmax Cloud.'
+                                },
+                                {
+                                    id: 'quickstart',
+                                    category: 'Getting Started',
+                                    title: '5-Minute Quickstart Guide',
+                                    excerpt: 'Initialize your first Core-X Web OS container and authenticate.'
+                                },
+                                {
+                                    id: 'windows-api',
+                                    category: 'Core-X APIs',
+                                    title: 'Create Window Applet',
+                                    excerpt: 'Control desktop hierarchy, tiling layouts, and virtual viewports.'
+                                },
+                                {
+                                    id: 'api-playground',
+                                    category: 'Sandbox',
+                                    title: 'Interactive API Playground',
+                                    excerpt: 'Test Core-X OS endpoints in real-time with simulated responses.'
+                                }
+                            ];
+                        }
+                        const q = this.searchQuery.toLowerCase();
+                        const allDocs = [{
+                                id: 'overview',
+                                category: 'Getting Started',
+                                title: 'Core-X Developer Overview',
+                                excerpt: 'Official developer portal for Core-X Web OS by ALmax Cloud.'
+                            },
+                            {
+                                id: 'quickstart',
+                                category: 'Getting Started',
+                                title: '5-Minute Quickstart Guide',
+                                excerpt: 'Initialize your first Core-X Web OS container and authenticate.'
+                            },
+                            {
+                                id: 'auth',
+                                category: 'Security',
+                                title: 'Authentication & OAuth 2.1',
+                                excerpt: 'Cryptographic verification and token-based authentication for daemon requests.'
+                            },
+                            {
+                                id: 'windows-api',
+                                category: 'Core-X APIs',
+                                title: 'Create Window Applet',
+                                excerpt: 'Control desktop hierarchy, tiling layouts, and virtual viewports.'
+                            },
+                            {
+                                id: 'api-playground',
+                                category: 'Sandbox',
+                                title: 'Interactive API Playground',
+                                excerpt: 'Test Core-X OS endpoints in real-time with simulated responses.'
+                            },
+                            {
+                                id: 'webhooks',
+                                category: 'Real-Time',
+                                title: 'Webhooks & Event Subscriptions',
+                                excerpt: 'Listen to real-time kernel events and applet state transitions.'
+                            },
+                            {
+                                id: 'errors',
+                                category: 'Troubleshooting',
+                                title: 'Error Codes & Rate Limits',
+                                excerpt: 'Understand Core-X API status codes and rate limit headers.'
+                            }
+                        ];
+                        return allDocs.filter(d => d.title.toLowerCase().includes(q) || d.excerpt.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
                     },
-                    {
-                        method: 'SYNC',
-                        path: '/api/v1/mesh',
-                        latency: '31ms P95',
-                        requests: '6.2K',
-                        target: 'SQLITE'
-                    },
-                    {
-                        method: 'NODE',
-                        path: '/api/v1/pulse',
-                        latency: '11ms P95',
-                        requests: '51.1K',
-                        target: 'LOCAL-07'
-                    }
-                ];
-                const cards = document.querySelectorAll('[data-endpoint]');
-                cards.forEach(card => {
-                    card.addEventListener('click', () => {
-                        const record = records[Number(card.dataset.endpoint)];
-                        cards.forEach(item => item.classList.remove('is-selected'));
-                        card.classList.add('is-selected');
-                        document.getElementById('active-endpoint').textContent = record.method + '  ' + record.path;
-                        document.getElementById('active-latency').textContent = record.latency;
-                        document.getElementById('active-requests').textContent = record.requests;
-                        document.getElementById('active-target').textContent = record.target;
-                    });
-                });
-            }
 
-            function initTiltCards() {
-                document.querySelectorAll('.depth-card').forEach(card => {
-                    card.addEventListener('pointermove', event => {
-                        const rect = card.getBoundingClientRect();
-                        const x = (event.clientX - rect.left) / rect.width - .5;
-                        const y = (event.clientY - rect.top) / rect.height - .5;
-                        card.style.transform = 'perspective(700px) rotateX(' + (-y * 5) + 'deg) rotateY(' + (x * 6) + 'deg) translateY(-3px)';
-                    });
-                    card.addEventListener('pointerleave', () => {
-                        card.style.transform = '';
-                    });
-                });
-            }
-
-            function initWorld() {
-                const canvas = document.getElementById('world-canvas');
-                const renderer = new THREE.WebGLRenderer({
-                    canvas,
-                    antialias: true,
-                    alpha: true
-                });
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                const scene = new THREE.Scene();
-                const camera = new THREE.PerspectiveCamera(46, 1, .1, 100);
-                const mouse = new THREE.Vector2();
-                const targetCamera = new THREE.Vector3(0, 0, 11);
-                const neutralCamera = new THREE.Vector3(0, 0, 11);
-                const coreGroup = new THREE.Group();
-                const networkGroup = new THREE.Group();
-                scene.add(coreGroup, networkGroup);
-
-                const core = new THREE.Mesh(
-                    new THREE.IcosahedronGeometry(1.16, 2),
-                    new THREE.MeshStandardMaterial({
-                        color: 0x0c3d56,
-                        emissive: 0x087faf,
-                        emissiveIntensity: 1.8,
-                        metalness: .8,
-                        roughness: .23
-                    })
-                );
-                const wire = new THREE.Mesh(
-                    new THREE.IcosahedronGeometry(1.42, 2),
-                    new THREE.MeshBasicMaterial({
-                        color: 0x78e7ff,
-                        wireframe: true,
-                        transparent: true,
-                        opacity: .24
-                    })
-                );
-                const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.78, .012, 6, 90), new THREE.MeshBasicMaterial({
-                    color: 0x4edbff,
-                    transparent: true,
-                    opacity: .34
-                }));
-                const ring2 = ring1.clone();
-                ring2.rotation.x = Math.PI * .48;
-                ring2.rotation.y = .5;
-                coreGroup.add(core, wire, ring1, ring2);
-
-                scene.add(new THREE.AmbientLight(0x8bc8ff, .55));
-                const light = new THREE.PointLight(0x4ddcff, 2.7, 19);
-                light.position.set(0, 1, 4);
-                scene.add(light);
-
-                const services = {
-                    apps: new THREE.Vector3(-4.2, 2.2, -1),
-                    api: new THREE.Vector3(3.9, 2.4, -.4),
-                    nodes: new THREE.Vector3(-4.5, -.9, 0),
-                    database: new THREE.Vector3(4.3, -1.5, -.7),
-                    guard: new THREE.Vector3(2.3, -3, -1),
-                    hub: new THREE.Vector3(0, 0, 0)
-                };
-                const colours = [0x5cddff, 0x488dff, 0x58ddc9, 0x67caff, 0x9fc8ff];
-                const names = ['CORE-X APPS', 'API SERVICES', 'LOCAL NODES', 'DATABASES', 'X-GUARD'];
-                const nodes = [];
-                const packetGroup = new THREE.Group();
-                scene.add(packetGroup);
-
-                Object.keys(services).filter(key => key !== 'hub').forEach((key, index) => {
-                    const position = services[key];
-                    const node = new THREE.Mesh(
-                        new THREE.OctahedronGeometry(.2 + (index % 2) * .05, 1),
-                        new THREE.MeshStandardMaterial({
-                            color: 0x153d55,
-                            emissive: colours[index],
-                            emissiveIntensity: 1.8,
-                            metalness: .65,
-                            roughness: .28
-                        })
-                    );
-                    node.position.copy(position);
-                    node.userData = {
-                        key,
-                        label: names[index]
-                    };
-                    networkGroup.add(node);
-                    nodes.push(node);
-
-                    const line = new THREE.Line(
-                        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), position]),
-                        new THREE.LineBasicMaterial({
-                            color: 0x2c99bd,
-                            transparent: true,
-                            opacity: .38
-                        })
-                    );
-                    networkGroup.add(line);
-
-                    const packet = new THREE.Mesh(new THREE.SphereGeometry(.042, 8, 8), new THREE.MeshBasicMaterial({
-                        color: 0xd2f9ff
-                    }));
-                    packet.userData = {
-                        endpoint: position.clone(),
-                        offset: index / 5
-                    };
-                    packetGroup.add(packet);
-                });
-
-                const particlePositions = [];
-                for (let i = 0; i < 440; i++) particlePositions.push((Math.random() - .5) * 20, (Math.random() - .5) * 15, (Math.random() - .5) * 9);
-                const particleGeometry = new THREE.BufferGeometry();
-                particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(particlePositions, 3));
-                scene.add(new THREE.Points(particleGeometry, new THREE.PointsMaterial({
-                    color: 0x4baeca,
-                    size: .024,
-                    transparent: true,
-                    opacity: .72
-                })));
-
-                const raycaster = new THREE.Raycaster();
-                let paused = false;
-                let hovered = null;
-
-                function focus(key) {
-                    const point = services[key] || services.hub;
-                    targetCamera.set(point.x * .3, point.y * .3, key === 'hub' ? 8.2 : 7.7);
-                    const readable = key === 'hub' ? 'CORE-X HUB' : (nodes.find(node => node.userData.key === key) || {}).userData?.label || 'GLOBAL MESH';
-                    document.getElementById('focus-readout').textContent = 'FOCUS / ' + readable + ' / LINK STABLE';
-                    document.querySelectorAll('[data-focus]').forEach(button => button.classList.toggle('is-selected', button.dataset.focus === key));
-                }
-
-                document.querySelectorAll('[data-focus]').forEach(button => button.addEventListener('click', () => focus(button.dataset.focus)));
-                document.getElementById('scene-pause').addEventListener('click', () => {
-                    paused = !paused;
-                    document.getElementById('scene-pause').setAttribute('aria-pressed', String(paused));
-                });
-                document.getElementById('scene-reset').addEventListener('click', () => {
-                    targetCamera.copy(neutralCamera);
-                    document.getElementById('focus-readout').textContent = 'TOPOLOGY / GLOBAL MESH';
-                    document.querySelectorAll('[data-focus]').forEach(button => button.classList.remove('is-selected'));
-                });
-
-                window.addEventListener('pointermove', event => {
-                    mouse.x = event.clientX / window.innerWidth * 2 - 1;
-                    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-                });
-                window.addEventListener('click', event => {
-                    if (event.target.closest('button, a')) return;
-                    if (hovered) focus(hovered.userData.key);
-                });
-                window.addEventListener('scroll', () => {
-                    const ratio = Math.min(window.scrollY / Math.max(document.body.scrollHeight - window.innerHeight, 1), 1);
-                    networkGroup.rotation.z = ratio * .18;
-                }, {
-                    passive: true
-                });
-
-                function resize() {
-                    renderer.setSize(window.innerWidth, window.innerHeight, false);
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                }
-                window.addEventListener('resize', resize);
-                resize();
-
-                const clock = new THREE.Clock();
-
-                function animate() {
-                    const time = clock.getElapsedTime();
-                    if (!paused) {
-                        coreGroup.rotation.y += .003;
-                        coreGroup.rotation.x = Math.sin(time * .5) * .12;
-                        ring1.rotation.z += .006;
-                        ring2.rotation.z -= .004;
-                        packetGroup.children.forEach(packet => {
-                            const progress = (time * .18 + packet.userData.offset) % 1;
-                            packet.position.lerpVectors(new THREE.Vector3(), packet.userData.endpoint, progress);
+                    navigateTo(id) {
+                        this.activeDocId = id;
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
                         });
+                    },
+
+                    showToast(msg) {
+                        this.toastMessage = msg;
+                        this.toastVisible = true;
+                        setTimeout(() => {
+                            this.toastVisible = false;
+                        }, 3000);
+                    },
+
+                    copyText(text) {
+                        const el = document.createElement('textarea');
+                        el.value = text;
+                        document.body.appendChild(el);
+                        el.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(el);
+                        this.showToast('Copied to clipboard successfully!');
+                    },
+
+                    copySnippet() {
+                        let code = "";
+                        if (this.selectedLanguage === 'javascript') {
+                            code = "import { CoreXKernel } from '@almax/core-x';\nconst kernel = new CoreXKernel({ clientId: 'cx_live_99a8fbc21' });\nawait kernel.boot();";
+                        } else if (this.selectedLanguage === 'python') {
+                            code = "from almax_core_x import CoreXKernel\nkernel = CoreXKernel(client_id='cx_live_99a8fbc21')\nkernel.boot()";
+                        } else {
+                            code = "curl -X POST https://api.core-x.almaxcloud.com/v1/kernel/boot -H 'Authorization: Bearer cx_pat_secret'";
+                        }
+                        this.copyText(code);
+                    },
+
+                    sendPlaygroundRequest() {
+                        this.playgroundLoading = true;
+                        this.playgroundResponse = null;
+                        setTimeout(() => {
+                            this.playgroundLoading = false;
+                            this.playgroundResponse = {
+                                status: "success",
+                                code: 200,
+                                timestamp: Date.now(),
+                                region: "us-east-almax",
+                                data: {
+                                    window_id: "win_cx_" + Math.floor(Math.random() * 90000 + 10000),
+                                    status: "active",
+                                    title: "Enterprise Dashboard v2",
+                                    viewport: {
+                                        width: 1280,
+                                        height: 800
+                                    },
+                                    pid: 4892
+                                }
+                            };
+                            this.showToast('API daemon response received (200 OK)');
+                        }, 650);
+                    },
+
+                    submitFeedback(rating) {
+                        this.showToast(rating === 'positive' ? 'Thank you! Your feedback has been recorded.' : 'Thank you! Feedback sent to the ALmax docs team.');
                     }
-                    raycaster.setFromCamera(mouse, camera);
-                    const hits = raycaster.intersectObjects(nodes);
-                    hovered = hits.length ? hits[0].object : null;
-                    nodes.forEach(node => node.scale.setScalar(node === hovered ? 1.65 : 1));
-                    camera.position.lerp(targetCamera, .035);
-                    camera.position.x += mouse.x * .1;
-                    camera.position.y += mouse.y * .07;
-                    camera.lookAt(0, 0, 0);
-                    renderer.render(scene, camera);
-                    requestAnimationFrame(animate);
                 }
-                animate();
             }
         </script>
-        @livewireScripts
     </body>
 
 </html>
