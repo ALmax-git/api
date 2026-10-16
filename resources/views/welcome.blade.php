@@ -399,7 +399,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                         <p class="text-xs text-slate-400">Every API request directed at Core-X must include the Authorization header with an active Personal Access Token (PAT) or Session JWT.</p>
 
                         <div class="border-core-border rounded-lg border bg-black/90 p-4 font-mono text-xs text-slate-300">
-                            Authorization: Bearer cx_pat_live_88fbc71902a...
+                            Authorization: Bearer public_key...
                         </div>
 
                         <div class="glass-panel space-y-1 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-200">
