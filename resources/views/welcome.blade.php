@@ -13,6 +13,7 @@
         <meta name="robots" content="index, follow">
         <link href="https://api.almaxcloud.com/" rel="canonical" />
 
+        <link type="image/x-icon" href="/apple-touch-icon.png" rel="shortcut icon">
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website">
         <meta property="og:title" content="Core-X Developer Documentation | ALmax Cloud">
@@ -91,7 +92,7 @@
             </div>
         </div>
 
-        <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/80 px-4 pt-20 backdrop-blur-md" x-show="searchOpen" x-transition.opacity @click.self="searchOpen = false">
+        <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/80 px-4 pt-20 backdrop-blur-md" x-show="searchOpen && !is_loading" x-transition.opacity @click.self="searchOpen = false">
             <div class="glass-panel glow-cyan-lg border-core-cyan/40 w-full max-w-2xl overflow-hidden rounded-xl border shadow-2xl" @click.stop>
                 <div class="border-core-border flex items-center border-b px-4 py-3">
                     <svg class="text-core-cyan mr-3 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,15 +137,15 @@
                         </svg>
                     </button>
                     <div class="flex cursor-pointer items-center space-x-3" @click="navigateTo('overview')">
-                        <div class="glow-cyan flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600" style="background-image: url('/logo.png'); background-size: cover; background-repeat: no-repeat;">
+                        <div class="glow-cyan flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600" style="background-image: url('/favicon.svg'); background-size: cover; background-repeat: no-repeat;">
                             {{-- <span class="text-lg font-extrabold text-black">CX</span> --}}
                         </div>
                         <div>
                             <div class="flex items-center space-x-2">
-                                <span class="text-base font-bold tracking-wider text-white">X-Engine v1.0</span>
-                                <span class="border-core-cyan/30 text-core-cyan rounded border bg-cyan-500/10 px-1.5 py-0.5 font-mono text-[10px] uppercase">Docs</span>
+                                <span class="text-base font-bold tracking-wider text-white">X-Engine</span>
+                                <span class="border-core-cyan/30 text-core-cyan hidden rounded border bg-cyan-500/10 px-1.5 py-0.5 font-mono text-[10px] uppercase md:block">Docs</span>
                             </div>
-                            <p class="font-mono text-[10px] tracking-tight text-slate-400">ALmax Cloud Web OS Engine</p>
+                            <p class="font-mono text-[10px] tracking-tight text-slate-400">ALmax Cloud</p>
                         </div>
                     </div>
                 </div>
@@ -175,7 +176,7 @@
                         </div>
                     </div>
 
-                    <a class="bg-core-cyan hidden items-center rounded-lg px-3 py-1.5 text-xs font-semibold text-black shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-colors hover:bg-cyan-400 md:inline-flex" href="#playground" @click.prevent="navigateTo('api-playground')">
+                    <a class="bg-core-cyan hidden items-center rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-colors hover:bg-cyan-400 md:inline-flex" href="#playground" @click.prevent="navigateTo('api-playground')">
                         API Playground
                     </a>
                 </div>
@@ -242,7 +243,7 @@
                     <div class="border-core-border border-b pb-6">
                         <div class="border-core-cyan/30 text-core-cyan mb-4 inline-flex items-center space-x-2 rounded-full border bg-cyan-500/10 px-2.5 py-1 font-mono text-xs">
                             <span class="bg-core-cyan h-1.5 w-1.5 animate-ping rounded-full"></span>
-                            <span>Core-X OS Engine v2.5</span>
+                            <span>Core-X Web OS: Business/Enterprise management tools.</span>
                         </div>
                         <h1 class="mb-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Core-X Developer Documentation</h1>
                         <p class="text-sm leading-relaxed text-slate-400 sm:text-base">
@@ -258,7 +259,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                 </svg>
                             </div>
-                            <h3 class="group-hover:text-core-cyan mb-1 text-base font-bold text-white transition-colors">5-Minute Quickstart</h3>
+                            <h3 class="group-hover:text-core-cyan mb-1 text-base font-bold text-white transition-colors">Quickstart Guide</h3>
                             <p class="text-xs text-slate-400">Initialize your first Core-X Web OS container, authenticate via X-Engine, and launch a window applet.</p>
                         </div>
                         <div class="glass-panel border-core-border hover:border-core-cyan/50 group cursor-pointer rounded-xl border p-5 transition-all" @click="navigateTo('web-api')">
@@ -316,7 +317,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                     <div class="border-core-border flex items-center justify-between border-t pt-6">
                         <span class="text-xs text-slate-500">Last updated: October 2026</span>
                         <button class="text-core-cyan flex items-center space-x-2 text-xs font-semibold hover:underline" @click="navigateTo('quickstart')">
-                            <span>Next: 5-Minute Quickstart Guide</span>
+                            <span>Next: Quickstart Guide</span>
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                             </svg>
@@ -327,7 +328,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                 <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'quickstart'">
                     <div class="border-core-border border-b pb-6">
                         <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Getting Started</span>
-                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">5-Minute Quickstart Guide</h1>
+                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Quickstart Guide</h1>
                         <p class="text-sm text-slate-400">Follow this step-by-step guide to integrate Core-X into your enterprise workflow.</p>
                     </div>
 
@@ -422,7 +423,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                             <span>Previous: Quickstart</span>
                         </button>
                         <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('windows-api')">
-                            <span>Next: Windows API</span>
+                            <span>Next: Web API</span>
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                             </svg>
@@ -455,28 +456,28 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                                 </thead>
                                 <tbody class="divide-core-border divide-y text-slate-300">
                                     <tr>
-                                        <td class="text-core-cyan p-3 font-mono">title</td>
-                                        <td class="p-3 font-mono text-slate-400">string</td>
+                                        <td class="text-core-cyan p-3 font-mono">namespace</td>
+                                        <td class="p-3 font-mono text-slate-400">str</td>
                                         <td class="p-3"><span class="text-emerald-400">Yes</span></td>
-                                        <td class="p-3">The window title displayed in the titlebar.</td>
+                                        <td class="p-3">The the Target App Namespace.</td>
                                     </tr>
                                     <tr>
                                         <td class="text-core-cyan p-3 font-mono">width</td>
-                                        <td class="p-3 font-mono text-slate-400">integer</td>
+                                        <td class="p-3 font-mono text-slate-400">int</td>
                                         <td class="p-3"><span class="text-slate-500">No</span></td>
                                         <td class="p-3">Initial window width in pixels (Default: 960).</td>
                                     </tr>
                                     <tr>
                                         <td class="text-core-cyan p-3 font-mono">height</td>
-                                        <td class="p-3 font-mono text-slate-400">integer</td>
+                                        <td class="p-3 font-mono text-slate-400">int</td>
                                         <td class="p-3"><span class="text-slate-500">No</span></td>
                                         <td class="p-3">Initial window height in pixels (Default: 640).</td>
                                     </tr>
                                     <tr>
-                                        <td class="text-core-cyan p-3 font-mono">url</td>
-                                        <td class="p-3 font-mono text-slate-400">string</td>
+                                        <td class="text-core-cyan p-3 font-mono">public_key</td>
+                                        <td class="p-3 font-mono text-slate-400">str</td>
                                         <td class="p-3"><span class="text-emerald-400">Yes</span></td>
-                                        <td class="p-3">Secure iframe source URL for the applet content.</td>
+                                        <td class="p-3">Secure public key in .env.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -533,7 +534,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                             </div>
 
                             <!-- Send Request Button -->
-                            <button class="bg-core-cyan flex w-full items-center justify-center space-x-2 rounded-lg py-2.5 text-xs font-semibold text-black shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-colors hover:bg-cyan-400" @click="sendPlaygroundRequest()">
+                            <button class="bg-core-cyan flex w-full items-center justify-center space-x-2 rounded-lg py-2.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-colors hover:bg-cyan-400" @click="sendPlaygroundRequest()">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                                 </svg>
@@ -693,6 +694,34 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
 
             </main>
         </div>
+
+        <div class="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[black]" x-show="is_loading" x-transition:leave="transition ease-in duration-700" x-transition:leave-start="opacity-100 scale-100 filter blur-none" x-transition:leave-end="opacity-0 scale-110 filter blur-xl">
+
+            <div class="scanlines"></div>
+
+            <!-- Loader Content -->
+            <div class="relative z-10 flex flex-col items-center">
+                <!-- Glitching Logo -->
+                <div class="glitch-text mb-8" data-text="Core-X">Core-X</div>
+
+                <!-- Rotating Rings -->
+                <div class="relative flex h-32 w-32 items-center justify-center">
+                    <div class="loader-ring absolute inset-0 opacity-80"></div>
+                    <div class="loader-ring border-t-cyber-pink absolute inset-2 border-l-[#00f0ff] opacity-60" style="animation-direction: reverse; animation-duration: 2s;"></div>
+                    <div class="absolute inset-4 rounded-full border border-[#00f0ff]/30"></div>
+                    <!-- Central Icon -->
+                    <div class="ph-fill h-12 w-12 animate-pulse text-4xl text-[#00f0ff]" style="background-image: url('/logo.png'); background-repeat: no-repeat; background-size: cover;"></div>
+                </div>
+
+                <!-- Boot Sequence Text -->
+                <div class="mt-12 flex h-16 flex-col items-center justify-end text-center font-mono text-sm tracking-widest text-[#00f0ff]/80">
+                    {{-- <span class="animate-pulse" x-text="currentBootText"></span> --}}
+                    <div class="mt-2 h-[2px] w-48 overflow-hidden rounded-full bg-white/10">
+                        <div class="h-full bg-white transition-all duration-300 ease-out" :style="`width: ${loading_progress}%`"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
         @livewireScripts
         <script>
             function coreDocsApp() {
@@ -708,7 +737,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                     // Playground State
                     playgroundMethod: 'POST',
                     playgroundUrl: 'https://testnet.almaxcloud.com/api/v1/',
-                    playgroundParams: '{\n  "title": "X-Engine v1.0",\n  "width": 1280,\n  "height": 800,\n  "url": "https://api.almaxcloud.com"\n}',
+                    playgroundParams: '{\n  "namespace": "com.almaxcloud.test",\n  "width": 1280,\n  "height": 800,\n  "public_key": "1234xyx..."\n}',
                     playgroundResponse: null,
                     playgroundLoading: false,
 
@@ -717,11 +746,11 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                             items: [{
                                     id: 'overview',
                                     title: 'Overview',
-                                    badge: 'v2.5'
+                                    badge: 'v1.0'
                                 },
                                 {
                                     id: 'quickstart',
-                                    title: '5-Minute Quickstart'
+                                    title: 'Quickstart Guide'
                                 },
                                 {
                                     id: 'auth',
@@ -733,7 +762,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                             name: 'Core-X APIs',
                             items: [{
                                     id: 'windows-api',
-                                    title: 'Windows & Applets API',
+                                    title: 'Web OS & Applets API',
                                     badge: 'POST'
                                 },
                                 {
@@ -755,6 +784,24 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                                 }
                             ]
                         }
+                    ],
+
+                    booting: false,
+                    bootDone: true,
+                    is_loading: true,
+                    loading_progress: 0,
+                    currentBootText: "",
+                    bootSequence: [
+                        "",
+                        "",
+                        "ESTABLISHING SECURE CONNECTION...",
+                        "",
+                        "Booting...",
+                        "",
+                        "Starting Services",
+                        "",
+                        "SYSTEM ONLINE.",
+                        "",
                     ],
 
                     get currentDocTitle() {
@@ -786,7 +833,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                                 {
                                     id: 'quickstart',
                                     category: 'Getting Started',
-                                    title: '5-Minute Quickstart Guide',
+                                    title: 'Quickstart Guide',
                                     excerpt: 'Initialize your first Core-X Web OS container and authenticate.'
                                 },
                                 {
@@ -813,7 +860,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                             {
                                 id: 'quickstart',
                                 category: 'Getting Started',
-                                title: '5-Minute Quickstart Guide',
+                                title: 'Quickstart Guide',
                                 excerpt: 'Initialize your first Core-X Web OS container and authenticate.'
                             },
                             {
@@ -849,9 +896,34 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                         ];
                         return allDocs.filter(d => d.title.toLowerCase().includes(q) || d.excerpt.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
                     },
+                    async init() {
+                        // Run Boot Sequence Logic
+                        for (let i = 0; i < this.bootSequence.length; i++) {
+                            this.currentBootText = this.bootSequence[i];
+                            this.loading_progress = ((i + 1) / this.bootSequence.length) * 100;
+
+                            // Random delay between lines for realism (300ms - 800ms)
+                            const delay = Math.floor(Math.random() * 500) + 300;
+                            await new Promise((r) => setTimeout(r, delay));
+
+                        }
+                        // Final dramatic pause before revealing the app
+                        await new Promise((r) => setTimeout(r, 600));
+                        this.is_loading = false;
+                        let nav = localStorage.getItem("currentScreen");
+                        console.log(this.activeDocId);
+                        if (typeof nav != undefined && nav != "null" && nav && nav != null) {
+                            this.navigateTo(nav);
+                        } else {
+                            this.navigateTo('overview');
+                        }
+                        this.activeDocId = this.activeDocId != null ? this.activeDocId : 'overview';
+
+                    },
 
                     navigateTo(id) {
                         this.activeDocId = id;
+                        localStorage.setItem("currentScreen", id);
                         window.scrollTo({
                             top: 0,
                             behavior: 'smooth'

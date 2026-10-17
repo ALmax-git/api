@@ -24,6 +24,16 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
 
+    public function boot_xapp(Request $request, string $xnamespace): JsonResponse
+    {
+
+        return response()->json([
+            'success' => true,
+            'message' => 'App authenticated.',
+            'xnamespace' => $xnamespace,
+        ], 401);
+    }
+
     public function profile(Request $request): JsonResponse
     {
         $user = $request->user();

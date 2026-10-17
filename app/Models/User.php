@@ -140,6 +140,27 @@ class User extends Authenticatable
         ];
     }
 
+    public function is_developer(string $app_namespace): bool
+    {
+        $xapp = XApp::where('name', $app_namespace)->first();
+        if (!$xapp) {
+            return false;
+        }
+        if ($xapp->status != 'published') {
+            return false;
+        }
+        $devs  = XDeveloper::where('user_id', $this->id)->get();
+        if ($devs) {
+            foreach ($devs as $dev) {
+                if ($xapp->developer->id == $dev->id) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return false;
+        }
+    }
 
     public function exceededDiskSpaceLimit($size): int
     {
