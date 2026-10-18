@@ -15,6 +15,7 @@ use App\Models\Client;
 use App\Models\Domain;
 use App\Models\Facility;
 use App\Models\User;
+use App\Models\XApp;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -26,6 +27,15 @@ class AuthController extends Controller
 
     public function boot_xapp(Request $request, string $xnamespace): JsonResponse
     {
+        Log::info('namespace', [$request, $xnamespace]);
+        $xapp =  XApp::where('name', $xnamespace)->first();
+        if (!$xapp) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalide Namespace.',
+                'data' => ['app_id' => $xnamespace],
+            ], 419);
+        }
 
         return response()->json([
             'success' => true,
