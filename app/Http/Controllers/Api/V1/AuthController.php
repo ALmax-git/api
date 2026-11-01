@@ -42,15 +42,13 @@ class AuthController extends Controller
             ], 419);
         }
         $client = get_client_namespace($xapp->name);
-        if (!$client) {
+        if (!$client || !$xapp) {
 
-            if (!$xapp) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Client not found Invalid namespace.',
-                    'data' => ['xnamespace' => $xnamespace],
-                ], 419);
-            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Client not found Invalid namespace.',
+                'data' => ['xnamespace' => $xnamespace],
+            ], 419);
         }
 
         return response()->json([
