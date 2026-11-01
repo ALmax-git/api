@@ -7,21 +7,18 @@ use App\Http\Controllers\FileSystemController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ResolveController;
 use App\Http\Controllers\SalesController;
+use App\Http\Middleware\EnsureTokenIsValid;
 use App\Models\User;
 
 Route::prefix('v1/')->group(function () {
 
-    Route::get('/products/get/all', function () {
-        abort_if(request()->header('X-Client-UUID') !== 'f1e2d3c4-b5a6-7890-1234-56789abcdef0', 401, 'Unauthorized');
-
-        return response()->json([
-            'products' => \App\Models\Product::all(),
-        ]);
-    });
+    Route::post('apps/data/{xnamespace}', [AuthController::class, 'app_data']);
+    Route::post('ddd', [AuthController::class, 'ddd']);
     // Public routes (throttled against brute force)
     Route::middleware('throttle:10,1')->group(function () {
         Route::post('app/boot/{xnamespace}', [AuthController::class, 'boot_xapp']);
-        Route::post('auth/login', [AuthController::class, 'login']);
+        Route::post('auth/login', [AuthController::class, 'login'])->withoutMiddleware(EnsureTokenIsValid::class);
+        Route::post('auth/register', [AuthController::class, 'register'])->withoutMiddleware(EnsureTokenIsValid::class);
         Route::post('engine/resolve', [AuthController::class, 'resolve']);
         Route::POST('auth/register-device', [AuthController::class, 'register_device']);
         Route::POST('auth/device-activation', [AuthController::class, 'device_activation']);
@@ -30,8 +27,13 @@ Route::prefix('v1/')->group(function () {
     // Protected routes requiring a valid Sanctum Bearer token
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
-        Route::post('auth/user/profile', [AuthController::class, 'profile']);
+        Route::post('auth/user/profile', [AuthController::class, 'profile'])->withoutMiddleware(EnsureTokenIsValid::class);
         Route::post('products/get/all', [ProductController::class, 'get_all_products']);
+        Route::post('products/store/{uuid}/all', [ProductController::class, 'get_my_products']);
+        Route::post('products/save/{uuid}', [ProductController::class, 'save_products']);
+        Route::post('products/find/{uuid}', [ProductController::class, 'find_product']);
+        Route::post('products/upload/media/{uuid}', [ProductController::class, 'upload_product_media']);
+        Route::post('products/delete/{uuid}', [ProductController::class, 'delete_product']);
         Route::get('auth/verify', [AuthController::class, 'verifyToken']); // Quick ping for X-POS connection checks
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::post('user/new_signature', [FileSystemController::class, 'new_signature']);

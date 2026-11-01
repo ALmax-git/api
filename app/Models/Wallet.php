@@ -67,6 +67,9 @@ class Wallet extends Model
             if (!$wallet->uuid) {
                 $wallet->uuid = Str::uuid()->toString();
             }
+            if (!$wallet->provider) {
+                $wallet->provider = 'com.almaxcloud.corex';
+            }
         });
     }
 

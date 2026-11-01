@@ -13,6 +13,7 @@
  */
 
 use App\Models\Client;
+use App\Models\Domain;
 use App\Models\PosCart;
 use App\Models\Wallet;
 use Flutterwave\Controller\PaymentController;
@@ -430,6 +431,26 @@ if (!function_exists('user_access')) {
             }
         }
         return $permissions;
+    }
+}
+
+// Retrieves the list of permissions available to the authenticated user based on their roles.
+if (!function_exists('get_client_namespace')) {
+    /**
+     * Get all permission labels available to the authenticated user via their roles.
+     *
+     * @return bool|Client List of permission labels.
+     */
+    function get_client_namespace(?string $name = null): bool|Client
+    {
+        if ($name == null) {
+            return false;
+        }
+        $d = Domain::where('name_space', $name)->first();
+        if (!$d) {
+            return false;
+        }
+        return $d->client;
     }
 }
 
@@ -1640,14 +1661,14 @@ if (!function_exists('almax_constant')) {
 }
 
 if (!function_exists('model_constant')) {
-    function model_constant($model): int
+    function model_constant(string $model): int
     {
         return match ($model) {
             'blog'              => 3,
             'client'            => 5,
             'product'           => 7,
             'product_variant'   => 41,
-            'product_category'   => 47,
+            'product_category'  => 3,
             'user'              => 11,
             'ticket'            => 13,
             'journal_entry'     => 17,

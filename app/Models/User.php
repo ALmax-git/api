@@ -535,6 +535,20 @@ class User extends Authenticatable
         return $this->hasMany(LeaveRoute::class, 'user_id');
     }
 
+    public function scopeTrustScore()
+    {
+
+        $trust_score = 0;
+        if (in_array('trust_score', $this->meta)) {
+            $trust_score = $this->meta['trust_score'] ?? 0;
+        } else {
+            $meta = $this->meta;
+            $meta['trust_score'] = 0;
+            $this->meta = $meta;
+            $this->save();
+        }
+        return $trust_score;
+    }
     public function get_leave_route(): array
     {
         return app('App\Services\LeaveRouteService')->get_approval_route($this);

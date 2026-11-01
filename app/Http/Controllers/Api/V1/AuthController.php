@@ -16,6 +16,8 @@ use App\Models\Domain;
 use App\Models\Facility;
 use App\Models\User;
 use App\Models\XApp;
+use App\Models\XAppAuth;
+use App\Models\XDeveloper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -25,24 +27,118 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
 
-    public function boot_xapp(Request $request, string $xnamespace): JsonResponse
+
+    public function  app_data(Request $request, string $xnamespace): JsonResponse
     {
-        Log::info('namespace', [$request, $xnamespace]);
-        $xapp =  XApp::where('name', $xnamespace)->first();
+
+        // 1. Validate application namespace
+        $xapp = XApp::where('name', $xnamespace)->first();
+
         if (!$xapp) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalide Namespace.',
-                'data' => ['app_id' => $xnamespace],
+                'message' => 'Invalid namespace.',
+                'data' => ['xnamespace' => $xnamespace],
             ], 419);
+        }
+        $client = get_client_namespace($xapp->name);
+        if (!$client) {
+
+            if (!$xapp) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Client not found Invalid namespace.',
+                    'data' => ['xnamespace' => $xnamespace],
+                ], 419);
+            }
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'App authenticated.',
-            'xnamespace' => $xnamespace,
-        ], 401);
+            'developer' => $xapp->developer->name,
+            'client_id' => make_uuid($client->id, 'client'),
+            'client_name' => $client->name,
+            'category_id' => $xapp->category_id,
+            'xnamespace' => $xapp->name,
+            'name' => $xapp->tagline,
+            'description' => $xapp->description,
+            'icon' => $xapp->icon_path,
+            'requires_consent' => $xapp->requires_consent,
+            'status' => $xapp->status,
+        ]);
     }
+    public function boot_xapp(Request $request, string $xnamespace): JsonResponse
+    {
+        // 1. Validate application namespace
+        $xapp = XApp::where('name', $xnamespace)->first();
+
+        if (!$xapp) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid namespace.',
+                'data' => ['xnamespace' => $xnamespace],
+            ], 404);
+        }
+
+        // 2. Retrieve the application authorization token
+        $token = $request->xtoken;
+
+        if (empty($token)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Application authorization token is required.',
+            ], 401);
+        }
+        // 4. Verify the app belongs to a valid XDeveloper account
+        $developer = XDeveloper::whereKey($xapp->developer_id)
+            ->where('status', 'active')
+            ->first();
+
+        if (!$developer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Application developer account is invalid or inactive.',
+            ], 403);
+        }
+
+
+        $xAuth = null;
+        if (auth()->check()) {
+            $xAuth = XAppAuth::where('user_id', auth()->user->id)
+                ->where('x_app_id', $xapp->id)
+                ->where('status', 'active')
+                ->first();
+        } else {
+            $xAuth = XAppAuth::create([
+                'user_id' => null,
+                'x_app_id'  => $xapp->id,
+                'status'    => 'init',
+                'token'     => generate_wallet_address(0) . rand(999, 999999),
+            ]);
+        }
+        // 3. Validate application 
+
+        if (!$xAuth) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or inactive application token.',
+            ], 401);
+        }
+
+        // 5. Update application authorization activity
+        $xAuth->touchLastSeen();
+
+        // 6. Return application authorization details
+        return response()->json([
+            'success' => true,
+            'message' => 'Application authenticated successfully.',
+            'data' => [
+                'xnamespace' => $xapp->name,
+                'app_id' => $xapp->uuid,
+                'auth' => $xAuth,
+            ],
+        ], 200);
+    }
+
 
     public function profile(Request $request): JsonResponse
     {
@@ -60,6 +156,7 @@ class AuthController extends Controller
             'user' => [
                 'id'            => make_uuid($user->id),
                 'uuid'          => make_uuid($user->id, 'user'),
+                'client_id'     => make_uuid($user->client_id, 'client'),
                 'name'          => $user->name,
                 'username'      => $user->username,
                 'email'         => $user->email,
@@ -79,6 +176,7 @@ class AuthController extends Controller
                 'status'        => $user->status,
                 'preferences'   => $user->preferences,
                 'timezone'      => $user->timezone,
+                'trust_score'   => $user->trust_score ?? 0,
                 'wallet'        => [
                     'uuid'              => make_uuid($user->wallet?->id, 'wallet'),
                     'label'             => $user->wallet?->label ?? null,
@@ -160,7 +258,7 @@ class AuthController extends Controller
 
         $bot  = Bot::where('device_key', read($request->terminal_token))->first();
         if (!$bot) return response()->json(['status' => 419, 'success' => false, 'errow' => '98761']);
-        Log::alert('TEST', [$bot]);
+
         if ($bot?->status == BotStatus::ACTIVE->value) {
             $client                         = Client::find($bot->client_id);
             return response()->json([
@@ -233,8 +331,21 @@ class AuthController extends Controller
     /**
      * Authenticate user & issue a device-bound API token.
      */
-    public function login(LoginRequest $request): JsonResponse
+    public function login(Request $request): JsonResponse
     {
+
+        // 1. Validate application namespace
+        $xnamespace = $request->header('Xsource');
+        $xapp = XApp::where('name', $xnamespace)->first();
+
+        if (!$xapp) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid namespace.',
+                'data' => ['xnamespace' => $xnamespace],
+            ], 419);
+        }
+
         $user = User::where('email', $request->email)->first();
 
         $passwordHash = $user?->password ?? $user?->pin ?? null;
@@ -250,12 +361,110 @@ class AuthController extends Controller
             ]);
         }
 
-        // if (isset($user->status) && $user->status !== 'active') {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Account is inactive. Contact system administrator.',
-        //     ], 403);
-        // }
+        // Default abilities for POS terminals / frontend clients if none provided
+        $abilities = user_access();
+
+        $token = $user->createToken($xapp->tagline ?? $xapp->name, $abilities);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Authentication successful.',
+            'data' => [
+                'user' => [
+                    'id'                    => make_uuid($user->id, 'user'),
+                    'client_id'             => make_uuid($user->client_id, 'client'),
+                    'name'                  => $user->name,
+                    'username'              => $user->username,
+                    'email'                 => $user->email,
+                    'first_name'            => $user->first_name,
+                    'surname'               => $user->surname,
+                    'last_name'             => $user->last_name,
+                    'phone_number'          => $user->phone_number,
+                    'country'               => $user->country?->name,
+                    'state'                 => $user->state?->name,
+                    'city'                  => $user->city?->name,
+                    'bio'                   => $user->bio,
+                    'profile_photo_url' => $user->profile_photo_url ?? 'https://api.dicebear.com/10.x/planets/svg?seed=happy',
+                    'language'              => $user->language,
+                    'gender'                => $user->gender,
+                    'address'               => $user->address,
+                    'date_of_birth'         => $user->date_of_birth,
+                    'status'                => $user->status,
+                    'preferences'           => $user->preferences,
+                    'timezone'              => $user->timezone,
+                    'trust_score'           => $user->trust_score ?? 0,
+                    'wallet'        => [
+                        'uuid'              => make_uuid($user->wallet?->id, 'wallet'),
+                        'label'             => $user->wallet?->label ?? null,
+                        'icon_url'          => $user->wallet?->icon_url ?? null,
+                        'address'           => $user->wallet?->address ?? null,
+                        'number'            => $user->wallet?->number ?? null,
+                        'locked_balance'    => $user->wallet?->locked_balance ?? 0,
+                        'balance'           => $user->wallet?->balance ?? 0,
+                        'available_balance' => $user->wallet?->available_balance ?? 0,
+                        'created_by'        => $user->wallet?->created_by ?? null,
+                        'provider'          => $user->wallet?->provider ?? 'com.almaxcloud.corex',
+                        'tag'               => $user->wallet?->tag ?? null,
+                        'metadata'          => $user->wallet?->metadata ?? null,
+                        'is_default'        => $user->wallet?->is_default ?? null,
+                        'is_active'         => $user->wallet?->is_active ?? null,
+                        'status'            => $user->wallet?->status ?? null,
+                        'last_balance_sync' => $user->wallet?->last_balance_sync ?? null,
+                        'activated_at'      => $user->wallet?->activated_at ?? null,
+                        'deactivated_at'    => $user->wallet?->deactivated_at ?? null,
+                        'account_number'    => $user->wallet?->account_number ?? null,
+                        'account_name'      => $user->wallet?->account_name ?? null,
+                        'bank_id'           => $user->wallet?->bank_id ?? null,
+                        'bank_name'         => $user->wallet?->bank?->name ?? null,
+                        'assets'            => $user->wallet?->assets->map(
+                            fn($asset) => [
+                                'balance'           => $asset->balance,
+                                'address'           => $asset->address,
+                                'locked_balance'    => $asset->locked_balance,
+                                'pending_balance'   => $asset->pending_balance,
+                                'status'            => $asset->status,
+                                'type'              => $asset->asset?->type,
+                                'icon_url'          => $asset->asset?->icon_url,
+                                'label'             => $asset->asset?->label,
+                                'symbol'            => $asset->asset?->symbol,
+                                'is_verified'       => $asset->asset?->is_verified,
+                                'value'             => $asset->asset?->value,
+                                'code'              => $asset->asset?->code,
+                                'description'       => $asset->asset?->description,
+                                'is_active'         => $asset->asset?->is_active,
+                                'withdrawal_fee'    => $asset->asset?->withdrawal_fee,
+                                'network_fee'       => $asset->asset?->network_fee,
+                            ]
+                        )
+                    ]
+                ],
+                'token' => $token->plainTextToken,
+                'token_type' => 'Bearer',
+                'abilities' => $token->accessToken->abilities,
+                'issued_at' => now()->toIso8601String(),
+            ],
+        ], 200);
+    }
+
+    /**
+     * Authenticate user & issue a device-bound API token.
+     */
+    public function login_with_device(LoginRequest $request): JsonResponse
+    {
+        $user = User::where('email', $request->email)->first();
+
+        $passwordHash = $user?->password ?? $user?->pin ?? null;
+        $isValidPassword = $user
+            && (
+                ($passwordHash && Hash::check($request->password, $passwordHash))
+                || ($user->pin && $user->pin === $request->password)
+            );
+
+        if (! $user || ! $isValidPassword) {
+            throw ValidationException::withMessages([
+                'email' => ['An Invalid credentials provided for Core-X authentication.'],
+            ]);
+        }
 
         // Default abilities for POS terminals / frontend clients if none provided
         $abilities = $request->input('abilities', [

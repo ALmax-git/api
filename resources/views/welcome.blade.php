@@ -83,6 +83,33 @@
 
     <body class="bg-grid bg-core-bg selection:bg-core-cyan min-h-screen overflow-x-hidden selection:text-black" x-data="coreDocsApp()" @keydown.window.prevent.ctrl.k="searchOpen = true" @keydown.window.prevent.meta.k="searchOpen = true" @keydown.escape.window="searchOpen = false">
 
+        <div class="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[black]" x-show="is_loading" x-transition:leave="transition ease-in duration-700" x-transition:leave-start="opacity-100 scale-100 filter blur-none" x-transition:leave-end="opacity-0 scale-110 filter blur-xl">
+
+            <div class="scanlines"></div>
+
+            <!-- Loader Content -->
+            <div class="relative z-10 flex flex-col items-center">
+                <!-- Glitching Logo -->
+                <div class="glitch-text mb-8" data-text="Core-X">Core-X</div>
+
+                <!-- Rotating Rings -->
+                <div class="relative flex h-32 w-32 items-center justify-center">
+                    <div class="loader-ring absolute inset-0 opacity-80"></div>
+                    <div class="loader-ring border-t-cyber-pink absolute inset-2 border-l-[#00f0ff] opacity-60" style="animation-direction: reverse; animation-duration: 2s;"></div>
+                    <div class="absolute inset-4 rounded-full border border-[#00f0ff]/30"></div>
+                    <!-- Central Icon -->
+                    <div class="ph-fill h-12 w-12 animate-pulse text-4xl text-[#00f0ff]" style="background-image: url('/logo.png'); background-repeat: no-repeat; background-size: cover;"></div>
+                </div>
+
+                <!-- Boot Sequence Text -->
+                <div class="mt-12 flex h-16 flex-col items-center justify-end text-center font-mono text-sm tracking-widest text-[#00f0ff]/80">
+                    {{-- <span class="animate-pulse" x-text="currentBootText"></span> --}}
+                    <div class="mt-2 h-[2px] w-48 overflow-hidden rounded-full bg-white/10">
+                        <div class="h-full bg-white transition-all duration-300 ease-out" :style="`width: ${loading_progress}%`"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="fixed bottom-6 right-6 z-50 transform transition-all duration-300" x-show="toastVisible" x-transition:enter="translate-y-2 opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="opacity-0">
             <div class="glass-panel glow-cyan border-core-cyan/40 text-core-cyan flex items-center space-x-3 rounded-lg border px-4 py-3">
                 <svg class="text-core-cyan h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,11 +323,38 @@
                                 <span>Copy</span>
                             </button>
                             <pre x-show="selectedLanguage === 'javascript'">
-<span class="text-purple-400">import</span> { Helpers, Payments } <span class="text-purple-400">from</span> <span class="text-emerald-300">'@almax/core-x'</span>;
-<span class="text-slate-500">// Initialize secure Core-X session</span>
-<span class="text-blue-400">import </span>XEngine <span class="text-purple-400">from </span> <span class="text-yellow-300">"@almaxcloud/core-x";</span>
-<span class="text-blue-400">XEngine</span>.<span class="text-yellow-300">boot({ public: 'App Public key' })</span> 
-console.<span class="text-yellow-300">log</span>(<span class="text-emerald-300">`Core-X OS booted successfully. ${Helpers.copy('my text')}`</span>);
+<span class="text-purple-400">import</span> XEngine, { Helpers, Payments } <span class="text-purple-400">from</span> <span class="text-emerald-300">"@almaxcloud/core-x"</span>;
+
+<span class="text-purple-400">window</span>.xengine = XEngine();
+
+<span class="text-purple-400">if</span> (<span class="text-purple-400">typeof</span> window !== <span class="text-emerald-300">"undefined"</span> && <span class="text-purple-400">typeof</span> window.xengine !== <span class="text-emerald-300">"undefined"</span>) {
+  <span class="text-purple-400">let</span> boot = <span class="text-purple-400">await</span> xengine.new_app(
+    <span class="text-emerald-300">"com.almaxcloud.corex"</span>,
+    <span class="text-emerald-300">"public_api_token_please_keep_in_env"</span>
+  );
+}
+
+<span class="text-slate-500">// returns {
+//   status: res.status ?? "success",
+//   success: true,
+//   token,
+// }
+// or
+// {
+//   status: res?.status ?? "error",
+//   success: false,
+//   token: null,
+// }</span>
+
+<span class="text-purple-400">export function</span> <span class="text-yellow-300">MyApplication</span>() {
+  <span class="text-purple-400">return</span> {
+    ...Helpers(),
+    ...Payments(),
+    <span class="text-slate-500">// copy(text_to_clipboard)
+    // open_file(valid_path_to_file_or_url)
+    // ...</span>
+  };
+}
 //                          </pre>
 
                             <pre style="display: none;" x-show="selectedLanguage === 'curl'">
@@ -500,6 +554,140 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                     </div>
                 </div>
 
+                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'window-context_menu'">
+
+                    <!-- Endpoint Parameters Table -->
+                    <div class="space-y-6 text-sm text-slate-300">
+                        <div class="glass-panel border-core-border rounded-xl border p-5">
+                            <h3 class="mb-3 text-lg font-bold text-white">Context Menu</h3>
+                            <p class="text-xs leading-relaxed text-slate-400">Snippet for context menu.</p>
+                        </div>
+
+                        <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
+                            <div class="border-core-border flex items-center justify-between border-b bg-slate-950 px-4 py-3">
+                                <div class="flex items-center space-x-2">
+                                    <span class="h-3 w-3 rounded-full bg-rose-500/80"></span>
+                                    <span class="h-3 w-3 rounded-full bg-amber-500/80"></span>
+                                    <span class="h-3 w-3 rounded-full bg-emerald-500/80"></span>
+                                    <span class="ml-2 font-mono text-xs text-slate-400">index.html</span>
+                                </div>
+                            </div>
+                            <div class="bg-black/90 p-4 font-mono text-xs text-slate-300">
+                                <textarea class="w-full bg-black/90 p-4 font-mono text-xs text-slate-300" rows="50">
+<style>
+#cm {
+    display: none;
+    position: absolute;
+    z-index: 101;
+    border-radius: 10px;
+    border: 1.5px solid #6f6f6f30;
+    background: var(--cm);
+    backdrop-filter: blur(25px) saturate(2);
+    min-width: 200px;
+    overflow: hidden;
+    padding: 0px 6px;
+    max-height: 0;
+    width: max-content;
+    transition: 110ms, max-height 200ms ease-in-out, top 100ms, left 100ms, padding 200ms ease-in-out, box-shadow 700ms;
+    opacity: 0;
+}
+
+#cm.show {
+    max-height: 100%;
+    padding: 6px;
+    box-shadow: 3px 3px 25px 0px var(--sd);
+    opacity: 1;
+}
+
+#cm>list {
+    transform: translate(0, -50%);
+    opacity: 0;
+    transition: transform 200ms ease-in-out, opacity 150ms 50ms;
+}
+
+#cm.show>list {
+    opacity: 1;
+    transform: none;
+}
+
+#cm.show-begin {
+    display: block;
+}
+
+#cm>list>a {
+    padding: 4.5px 12px;
+    margin: 1px 0;
+    border-radius: 6px;
+    font-size: 15px;
+    display: flex;
+    line-height: 19px;
+}
+
+#cm>list>a>.bi {
+    font-size: 17px;
+    margin-right: 10px;
+    display: block;
+}
+
+#cm>list>a>info {
+    float: right;
+    text-align: end;
+    color: #888;
+    flex-grow: 1;
+}
+
+#cm>list>*:not(hr):hover {
+    background-color: var(--hover-b);
+}
+
+input.foc {
+    display: block;
+    height: 0;
+    width: 0;
+    opacity: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+    outline: none;
+    background: none;
+} 
+</style>
+ <div id="cm" tabindex="-1" x-data="contextMenu()" x-show="open" :class="{ 'show-begin': showBegin, 'show': showMenu }" :style="`top: ${y}px; left: ${x}px;`" @click.away="close" @blur.capture="close">
+
+    <input class="foc" disabled x-ref="foc" @blur="close">
+
+    <list class="new">
+        <template x-for="item in items">
+            <template x-if="item.type === 'link'">
+                <a class="a" @mousedown.prevent="executeAction(item.action)" x-html="item.label"></a>
+            </template>
+            <template x-if="item.type === 'html'">
+                <div x-html="item.html"></div>
+            </template>
+        </template>
+    </list>
+</div>
+
+</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border-core-border flex items-center justify-between border-t pt-6">
+                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('auth')">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            <span>Previous: Authentication</span>
+                        </button>
+                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('api-playground')">
+                            <span>Next: Interactive API Playground</span>
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="animate-fadeIn space-y-8" id="playground" style="display: none;" x-show="activeDocId === 'api-playground'">
                     <div class="border-core-border border-b pb-6">
                         <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Interactive Sandbox</span>
@@ -595,6 +783,104 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                                 <span>Needs improvement</span>
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'database'">
+                    <div class="border-core-border border-b pb-6">
+                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Storage</span>
+                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Secure IndexedDB Storage</h1>
+                        <p class="text-sm text-slate-400">Core-X includes a secure browser-side database layer for persisting small, non-sensitive application state such as preferences, local session snapshots, and ephemeral runtime data.</p>
+                    </div>
+
+                    <div class="space-y-6 text-sm text-slate-300">
+                        <div class="glass-panel border-core-border rounded-xl border p-5">
+                            <h3 class="mb-3 text-lg font-bold text-white">Overview</h3>
+                            <p class="text-xs leading-relaxed text-slate-400">The secure database layer is built on IndexedDB and exposes a guarded API that only permits keys defined in the allowlist. This prevents arbitrary storage access and keeps the runtime predictable across applets and sessions.</p>
+                        </div>
+
+                        <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
+                            <div class="border-core-border flex items-center justify-between border-b bg-slate-950 px-4 py-3">
+                                <div class="flex items-center space-x-2">
+                                    <span class="h-3 w-3 rounded-full bg-rose-500/80"></span>
+                                    <span class="h-3 w-3 rounded-full bg-amber-500/80"></span>
+                                    <span class="h-3 w-3 rounded-full bg-emerald-500/80"></span>
+                                    <span class="ml-2 font-mono text-xs text-slate-400">secure-store.js</span>
+                                </div>
+                            </div>
+                            <div class="bg-black/90 p-4 font-mono text-xs text-slate-300">
+                                <pre class="overflow-x-auto">
+                                    <span class="text-purple-400">import</span> XEngine <span class="text-purple-400">from</span> <span class="text-emerald-300">"@almaxcloud/core-x"</span>;
+
+<span class="text-purple-400">window</span>.xengine = XEngine();
+
+<span class="text-purple-400">const</span> theme = <span class="text-purple-400">await</span> xengine.db_get(<span class="text-emerald-300">"theme"</span>);
+
+<span class="text-purple-400">await</span> xengine.db_set(<span class="text-emerald-300">"theme"</span>, <span class="text-emerald-300">"dark"</span>, <span class="text-emerald-300">"string"</span>);
+<span class="text-purple-400">await</span> xengine.db_set(<span class="text-emerald-300">"balance"</span>, <span class="text-orange-400">2500</span>, <span class="text-emerald-300">"number"</span>);
+<span class="text-purple-400">await</span> xengine.db_set(<span class="text-emerald-300">"is_active"</span>, <span class="text-purple-400">true</span>, <span class="text-emerald-300">"bool"</span>);
+<span class="text-purple-400">await</span> xengine.db_set(<span class="text-emerald-300">"cart_items"</span>, [<span class="text-emerald-300">"sku-101"</span>, <span class="text-emerald-300">"sku-202"</span>], <span class="text-emerald-300">"array"</span>);
+
+<span class="text-purple-400">const</span> saved = <span class="text-purple-400">await</span> xengine.db_get(<span class="text-emerald-300">"cart_items"</span>);
+<span class="text-purple-400">await</span> xengine.db_delete(<span class="text-emerald-300">"session_token"</span>);
+
+<span class="text-slate-500">// Supported formats: ["string", "number", "bool", "array"]</span></pre>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
+                            <table class="w-full text-left text-xs">
+                                <thead class="border-core-border border-b bg-slate-950 font-mono text-slate-400">
+                                    <tr>
+                                        <th class="p-3">Method</th>
+                                        <th class="p-3">Purpose</th>
+                                        <th class="p-3">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-core-border divide-y text-slate-300">
+                                    <tr>
+                                        <td class="text-core-cyan p-3 font-mono">xengine.db_get(key)</td>
+                                        <td class="p-3">Read a stored value by key from the secure IndexedDB store.</td>
+                                        <td class="p-3 text-slate-400">Use only allowed keys from your local app schema; unsupported keys return nothing.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-core-cyan p-3 font-mono">xengine.db_set(key, value, format)</td>
+                                        <td class="p-3">Persist a value in the secure local database.</td>
+                                        <td class="p-3 text-slate-400">Supported formats: <span class="font-mono text-slate-200">"string"</span>, <span class="font-mono text-slate-200">"number"</span>, <span class="font-mono text-slate-200">"bool"</span>, <span class="font-mono text-slate-200">"array"</span>.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-core-cyan p-3 font-mono">xengine.db_delete(key)</td>
+                                        <td class="p-3">Delete a value from the local store.</td>
+                                        <td class="p-3 text-slate-400">This is the safe way to clear a stored key when a session or workflow ends.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="glass-panel border-core-border rounded-xl border p-5">
+                            <h3 class="mb-3 text-lg font-bold text-white">Usage notes</h3>
+                            <ul class="space-y-2 text-xs leading-relaxed text-slate-400">
+                                <li>• Instantiate the client once: <span class="font-mono text-slate-200">window.xengine = XEngine();</span></li>
+                                <li>• Use the instance methods directly: <span class="font-mono text-slate-200">await xengine.db_get(key)</span></li>
+                                <li>• Keep storage keys explicit and minimal to avoid accidental cross-app leakage.</li>
+                                <li>• Store only session state, UI preferences, or lightweight metadata — not private secrets.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="border-core-border flex items-center justify-between border-t pt-6">
+                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('api-playground')">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            <span>Previous: API Playground</span>
+                        </button>
+                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('webhooks')">
+                            <span>Next: Webhooks & Events</span>
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
@@ -695,33 +981,6 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
             </main>
         </div>
 
-        <div class="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[black]" x-show="is_loading" x-transition:leave="transition ease-in duration-700" x-transition:leave-start="opacity-100 scale-100 filter blur-none" x-transition:leave-end="opacity-0 scale-110 filter blur-xl">
-
-            <div class="scanlines"></div>
-
-            <!-- Loader Content -->
-            <div class="relative z-10 flex flex-col items-center">
-                <!-- Glitching Logo -->
-                <div class="glitch-text mb-8" data-text="Core-X">Core-X</div>
-
-                <!-- Rotating Rings -->
-                <div class="relative flex h-32 w-32 items-center justify-center">
-                    <div class="loader-ring absolute inset-0 opacity-80"></div>
-                    <div class="loader-ring border-t-cyber-pink absolute inset-2 border-l-[#00f0ff] opacity-60" style="animation-direction: reverse; animation-duration: 2s;"></div>
-                    <div class="absolute inset-4 rounded-full border border-[#00f0ff]/30"></div>
-                    <!-- Central Icon -->
-                    <div class="ph-fill h-12 w-12 animate-pulse text-4xl text-[#00f0ff]" style="background-image: url('/logo.png'); background-repeat: no-repeat; background-size: cover;"></div>
-                </div>
-
-                <!-- Boot Sequence Text -->
-                <div class="mt-12 flex h-16 flex-col items-center justify-end text-center font-mono text-sm tracking-widest text-[#00f0ff]/80">
-                    {{-- <span class="animate-pulse" x-text="currentBootText"></span> --}}
-                    <div class="mt-2 h-[2px] w-48 overflow-hidden rounded-full bg-white/10">
-                        <div class="h-full bg-white transition-all duration-300 ease-out" :style="`width: ${loading_progress}%`"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
         @livewireScripts
         <script>
             function coreDocsApp() {
@@ -771,6 +1030,20 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                                     badge: 'Sandbox'
                                 }
                             ]
+                        },
+                        {
+                            name: 'Database',
+                            items: [{
+                                id: 'database',
+                                title: 'Secure IndexedDB'
+                            }]
+                        },
+                        {
+                            name: 'Helpers',
+                            items: [{
+                                id: 'window-context_menu',
+                                title: 'Context Menu'
+                            }]
                         },
                         {
                             name: 'Real-Time & Ops',
@@ -882,6 +1155,12 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                                 excerpt: 'Test Core-X OS endpoints in real-time with simulated responses.'
                             },
                             {
+                                id: 'database',
+                                category: 'Database',
+                                title: 'Secure IndexedDB Storage',
+                                excerpt: 'Persist and retrieve guarded browser-side data with secure IndexedDB helpers.'
+                            },
+                            {
                                 id: 'webhooks',
                                 category: 'Real-Time',
                                 title: 'Webhooks & Event Subscriptions',
@@ -951,7 +1230,7 @@ curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
                     copySnippet() {
                         let code = "";
                         if (this.selectedLanguage === 'javascript') {
-                            code = "import { XEngine } from '@almax/core-x';\nXEngine.boot({ public: 'App Public key' });";
+                            code = "import XEngine, { Helpers, Payments } from '@almaxcloud/core-x';\n\nwindow.xengine = XEngine();\n\nif (typeof window !== 'undefined' && typeof window.xengine !== 'undefined') {\n  let boot = await xengine.new_app(\n    'com.almaxcloud.corex',\n    'public_api_token_please_keep_in_env'\n  );\n}\n\nexport function MyApplication() {\n  return {\n    ...Helpers(),\n    ...Payments(),\n  };\n}";
                         } else {
                             code = "curl -X POST https://api.almaxcloud.com/api/v1/app/boot -H 'Authorization: Bearer App Public key'";
                         }
