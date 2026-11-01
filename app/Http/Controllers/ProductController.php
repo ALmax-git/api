@@ -159,7 +159,6 @@ class ProductController extends Controller
     public function upload_product_media(Request $request, string $uuid)
     {
 
-        Log::info('test', [$request->file('files'), $request]);
         $request->validate([
             'files' => 'required|array',
             'files.*' => 'required|image|max:6024',

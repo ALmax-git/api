@@ -13,7 +13,6 @@ use App\Models\User;
 Route::prefix('v1/')->group(function () {
 
     Route::post('apps/data/{xnamespace}', [AuthController::class, 'app_data']);
-    Route::post('ddd', [AuthController::class, 'ddd']);
     // Public routes (throttled against brute force)
     Route::middleware('throttle:10,1')->group(function () {
         Route::post('app/boot/{xnamespace}', [AuthController::class, 'boot_xapp']);
@@ -28,18 +27,22 @@ Route::prefix('v1/')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/user/profile', [AuthController::class, 'profile'])->withoutMiddleware(EnsureTokenIsValid::class);
+
         Route::post('products/get/all', [ProductController::class, 'get_all_products']);
         Route::post('products/store/{uuid}/all', [ProductController::class, 'get_my_products']);
         Route::post('products/save/{uuid}', [ProductController::class, 'save_products']);
         Route::post('products/find/{uuid}', [ProductController::class, 'find_product']);
         Route::post('products/upload/media/{uuid}', [ProductController::class, 'upload_product_media']);
         Route::post('products/delete/{uuid}', [ProductController::class, 'delete_product']);
+
+        Route::post('client/store/sales/{uuid}/all', [SalesController::class, 'store_sales']);
+
         Route::get('auth/verify', [AuthController::class, 'verifyToken']); // Quick ping for X-POS connection checks
-        Route::post('auth/logout', [AuthController::class, 'logout']);
-        Route::post('user/new_signature', [FileSystemController::class, 'new_signature']);
-        Route::post('auth/logout-all', [AuthController::class, 'logoutAll']);
         Route::get('auth/devices', [AuthController::class, 'activeDevices']);
+        Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::delete('auth/devices/{tokenId}', [AuthController::class, 'revokeDevice']);
+        Route::post('auth/logout-all', [AuthController::class, 'logoutAll']);
+        Route::post('user/new_signature', [FileSystemController::class, 'new_signature']);
         Route::get('products/all', [AuthController::class, 'getProducts']);
         Route::get('staffs/all', [AuthController::class, 'getStaffs']);
         Route::get('resolve/{model}/{uuid}', [ResolveController::class, 'show']);

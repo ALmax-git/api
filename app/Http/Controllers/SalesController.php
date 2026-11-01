@@ -17,9 +17,110 @@ use function Illuminate\Log\log;
 class SalesController extends Controller
 {
 
+    public function store_sales(Request $request, string $uuid)
+    {
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+        $client = Client::find(get_id($uuid, 'client'));
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Store not found.' . $uuid
+
+            ], 404);
+        }
+        if ($client->id != $user->client_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not autheorized.',
+            ], 492);
+        }
+
+
+        $sales = $client->sales()->with(['product', 'product.category', 'user', 'client'])->get();
+
+        return response()->json(
+            [
+                'success' => true,
+                'sales' => $sales->map(
+                    fn($sale) => [
+                        'quantity'                  => $sale->quantity,
+                        'price'                     => $sale->price,
+                        'total'                     => $sale->total,
+                        'product_global_key'        => $sale->product_global_key,
+                        'discount'                  => $sale->discount,
+                        'global_key'                => $sale->global_key,
+                        'created_at'                => $sale->created_at,
+                        'product' => [
+                            'id'                        => make_uuid($sale->product?->id, 'product'),
+                            'uuid'                      => '#' . make_uuid($sale->product?->id, 'product'),
+                            'name'                      => $sale->product?->name,
+                            'brand'                     => $sale->product?->brand,
+                            'sub_title'                 => $sale->product?->sub_title,
+                            'sold'                      => $sale->product?->sold,
+                            'image_url'                 => $sale->product?->images->first()?->storage_path ?? "default.png",
+                            'emoji'                     => $sale->product?->emoji ?: '📦',
+                            'color'                     => $sale->product?->color ?: '#6B7280',
+                            'sale_price'                => $sale->product?->sale_price,
+                            'available_stock'           => $sale->product?->is_non_stock_item ? 9999 : $sale->product?->available_stock,
+                            'category_id'               => $sale->product?->category ? $sale->product?->category?->id : null,
+                            'category'                  => $sale->product?->category?->title,
+                            'discount'                  => $sale->product?->discount,
+                            'margin'                    => $sale->product?->margin,
+                            'labels' => $sale->product?->labels
+                                ->map(
+                                    fn($label) => [
+                                        'id'            => $label->id,
+                                        'status'        => $label->status,
+                                        'uuid'          => '#' . make_uuid($label->id, 'label'),
+                                    ],
+                                )
+                                ->values(),
+                            'sale_units' => $sale->product?->sale_units
+                                ->map(
+                                    fn($sale_unit) => [
+                                        'quantity'      => $sale_unit->quantity,
+                                        'label'         => $sale_unit->label,
+                                        'price'         => $sale_unit->price,
+                                        'code'          => $sale_unit->code,
+                                    ]
+                                )
+                                ->values()
+                        ],
+                        'user' => [
+                            'id'            => make_uuid($sale->user?->id),
+                            'uuid'          => make_uuid($sale->user?->id, 'user'),
+                            'name'          => $sale->user?->name,
+                            'username'      => $sale->user?->username,
+                            'email'         => $sale->user?->email,
+                            'first_name'    => $sale->user?->first_name,
+                            'surname'       => $sale->user?->surname,
+                            'last_name'     => $sale->user?->last_name,
+                            'phone_number'  => $sale->user?->phone_number,
+                            'country'       => $sale->user?->country?->name,
+                            'state'         => $sale->user?->state?->name,
+                            'city'          => $sale->user?->city?->name,
+                            'bio'           => $sale->user?->bio,
+                            'profile_photo_url' => $sale->user?->profile_photo_url ?? 'default.png',
+                            'language'      => $sale->user?->language,
+                            'gender'        => $sale->user?->gender,
+                            'status'        => $sale->user?->status,
+                            'trust_score'   => $sale->user?->trust_score ?? 0,
+                        ]
+                    ]
+                )
+            ]
+        );
+    }
     public function sale_new(Request $request)
     {
-        Log::info('Sale request received', ['request' => $request->all()]);
         $data = $request->validate([
             'user_id'        => 'required',
             'payment_method' => 'required|string',
@@ -156,13 +257,6 @@ class SalesController extends Controller
                 'error' => $e,
             ], 401)->header('Cache-Control', 'no-store');
         }
-
-        // if ($source !== 'Sale-X') {
-        //     return response()->json([
-        //         'status' => 'error',
-        //         'message' => 'Invalid app source.',
-        //     ], 403)->header('Cache-Control', 'no-store');
-        // }
 
         if (!is_numeric($token)) {
             return response()->json([
