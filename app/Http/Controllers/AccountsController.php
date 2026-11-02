@@ -17,6 +17,67 @@ use Symfony\Polyfill\Uuid\Uuid;
 
 class AccountsController extends Controller
 {
+
+    public function store_staffs(Request $request, string $uuid)
+    {
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+        $client = Client::find(get_id($uuid, 'client'));
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Store not found.' . $uuid
+
+            ], 404);
+        }
+        if ($client->id != $user->client_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not autheorized.',
+            ], 492);
+        }
+
+
+        $staffs = $client->staffs();
+
+        return response()->json(
+            [
+                'success' => true,
+                'staffs' => $staffs->map(
+                    fn($user) => [
+                        'id'                    => make_uuid($user->id, 'user'),
+                        'name'                  => $user->name,
+                        'username'              => $user->username,
+                        'email'                 => $user->email,
+                        'first_name'            => $user->first_name,
+                        'surname'               => $user->surname,
+                        'last_name'             => $user->last_name,
+                        'phone_number'          => $user->phone_number,
+                        'country'               => $user->country?->name,
+                        'state'                 => $user->state?->name,
+                        'city'                  => $user->city?->name,
+                        'bio'                   => $user->bio,
+                        'profile_photo_url'     => $user->profile_photo_url,
+                        'language'              => $user->language,
+                        'gender'                => $user->gender,
+                        'address'               => $user->address,
+                        'date_of_birth'         => $user->date_of_birth,
+                        'status'                => $user->status,
+                        'preferences'           => $user->preferences,
+                        'timezone'              => $user->timezone,
+                        'access'                => user_access($user->id),
+                    ]
+                )
+            ]
+        );
+    }
     public function new_supplier(Request $request)
     {
         $data = $request->validate([

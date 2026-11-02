@@ -11,6 +11,17 @@ use Illuminate\Http\JsonResponse;
 
 class BotNetController extends Controller
 {
+
+    public function store_find_bot(Request $request, string $uuid)
+    {
+
+        $bot = Bot::where('device_key', get_id($uuid, 'bot'))->firstOrFail();
+
+        return response()->json([
+            'success'                    => true,
+            'device_key'                    => $bot->device_key,
+        ]);
+    }
     private function getBot(string $key)
     {
         return Bot::where('device_key', $key)->firstOrFail();

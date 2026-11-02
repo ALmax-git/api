@@ -15,6 +15,7 @@
 use App\Models\Client;
 use App\Models\Domain;
 use App\Models\PosCart;
+use App\Models\User;
 use App\Models\Wallet;
 use Flutterwave\Controller\PaymentController;
 use Flutterwave\EventHandlers\ModalEventHandler as PaymentHandler;
@@ -31,25 +32,6 @@ use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\IpUtils;
 
 
-if (!function_exists('flutterwave_payment')) {
-    /**
-     * Helper function to initialize and handle a Flutterwave payment.
-     *
-     * @return PaymentController Payment controller.
-     */
-    function flutterwave_payment(): PaymentController
-    {
-        // Initialize Flutterwave SDK
-        Flutterwave::bootstrap();
-
-        $customHandler          = new PaymentHandler();
-        $client                 = new Flutterwave();
-        $modalType              = Modal::POPUP;
-        $controller             = new PaymentController($client, $customHandler, $modalType);
-
-        return $controller;
-    }
-}
 if (!function_exists('get_the_right_db')) {
     function get_the_right_db(string $name)
     {
@@ -162,152 +144,6 @@ function resolve_label(string $type, string $hex): ?string
     }
 }
 
-/**
- * Single purifier instance for ALmax
- *
- * Keeps interactive attributes like wire:click, onclick, and data-*
- * @return HTMLPurifier
- */
-function purifier(): HTMLPurifier
-{
-    static $purifier = null;
-
-    if ($purifier === null) {
-        $config                             = HTMLPurifier_Config::createDefault();
-
-        // Allowed elements (inline + block you use in blogs)
-        $config->set('HTML.AllowedElements', [
-            'p',
-            'a',
-            'ul',
-            'ol',
-            'li',
-            'strong',
-            'em',
-            'blockquote',
-            'code',
-            'pre',
-            'img',
-            'h1',
-            'h2',
-            'h3',
-            'h4',
-            'h5',
-            'h6',
-            'span',
-            'table',
-            'tr',
-            'td',
-            'tbody',
-            'thead',
-            'hr',
-            'div',
-        ]);
-
-        // Custom definition for ALmax
-        $config->set('HTML.DefinitionID', 'almax-custom');
-        $config->set('HTML.DefinitionRev', 1);
-
-        if ($def = $config->maybeGetRawHTMLDefinition()) {
-            // Allow global attributes we need
-            $def->info_global_attr['data-*']        = new \HTMLPurifier_AttrDef_Text;
-            $def->info_global_attr['wire:click']    = new \HTMLPurifier_AttrDef_Text;
-            $def->info_global_attr['onclick']       = new \HTMLPurifier_AttrDef_Text;
-            $def->info_global_attr['class']       = new \HTMLPurifier_AttrDef_Text;
-        }
-
-        // Build purifier once
-        $purifier = new \HTMLPurifier($config);
-    }
-
-    return $purifier;
-}
-
-/**
- * Content parser that recognizes and converts special tokens into clickable spans:
- * - Products:          {#hex}(label)               ->  <span class="almax-token almax-product">label</span>
- * - Users:             {@hex}(label)               ->  <span class="almax-token almax-user">label</span>
- * - Blogs:             {&hex}(label)               ->  <span class="almax-token almax-blog">label</span>
- * - Clients:           {~hex}(label)               ->  <span class="almax-token almax-client">label</span>
- * - Tickets:           {%hex}(label)               ->  <span class="almax-token almax-ticket">label</span>
- * - Journal entries:   {!hex}(label)               ->  <span class="almax-token almax-journal_entry">label</span>
- * - Stocks:            {;hex}(label)               ->  <span class="almax-token almax-stock">label</span>
- * - Stock entries:     {:hex}(label)               ->  <span class="almax-token almax-stock_entry">label</span>
- * - File shares:       {=hex}(label)               ->  <span class="almax-token almax-file_share">label</span>
- * - Projects:          {$hex}(label)               ->  <span class="almax-token almax-project">label</span>
- * - Tasks:             {^hex}(label)               ->  <span class="almax-token almax-task">label</span>
- * The hex part is used to resolve the actual label from the database (with caching).
- * Also processes Markdown and sanitizes HT ML output.
- * 
- * @param string $content The content to parse 
- * @param array $options Parser options:
- *   - resolve: bool - Whether to resolve token labels (default: true)
- *   - cache_ttl: int - Cache TTL in seconds for resolved labels (default: 300)
- * @return string The parsed HTML content
- */
-function parser(string $content, array $options = []): string
-{
-    $options = array_merge([
-        'inline' => false, // If true, only parse inline tokens without Markdown processing
-        'resolve' => true,
-        'cache_ttl' => 300,
-    ], $options);
-
-    // Regex patterns
-    $patterns = [
-        'blog'              => '/\{&([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'client'            => '/\{~([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'product'           => '/\{#([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'product_variant'   => '/\{\*([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'user'              => '/\{@([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'pos_cart'          => '/\{R([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'ticket'            => '/\{%([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'journal_entry'     => '/\{!([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'stock'             => '/\{;([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'stock_entry'       => '/\{:([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'file_share'        => '/\{=([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'project'           => '/\{\$([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-        'task'              => '/\{\^([A-Fa-f0-9]{4,8})\}(?:\(([^)]+)\))?/u',
-    ];
-
-    $fetchLabel = function (string $type, string $hex) use ($options) {
-        $cacheKey = "almax:resolve:{$type}:{$hex}";
-        if ($options['cache_ttl'] > 0) {
-            return cache()->remember($cacheKey, $options['cache_ttl'], fn() => resolve_label($type, $hex));
-        }
-        return resolve_label($type, $hex);
-    };
-
-    $callback = function ($type) use ($fetchLabel) {
-        return function ($matches) use ($type, $fetchLabel) {
-            $hex = $matches[1];
-            $alt = $matches[2] ?? null;
-            $label = $fetchLabel($type, $hex) ?? $alt ?? "{$type[0]}{$hex}";
-            return "<span class=\"almax-token almax-{$type} bg-neutral-800 text-xs mx-2 px-3 rounded-lg text-white hover:bg-neutral-700 cursor-pointer\" "
-                . "data-type=\"{$type}\" data-id=\"" . e($hex) . "\" "
-                . "title=\"" . e($label) . "\" "
-                . "onclick=\"window.dispatchEvent(new CustomEvent('almax-model', { detail: { type: '{$type}', id: '{$hex}' } }));\">"
-                . e($label) . "</span>";
-        };
-    };
-
-    // 1) Replace tokens BEFORE Markdown
-    foreach ($patterns as $type => $regex) {
-        $content = preg_replace_callback($regex, $callback($type), $content);
-    }
-
-    // 2) Markdown conversion
-    static $converter = null;
-    if ($converter === null) {
-        $converter = new \League\CommonMark\CommonMarkConverter([]);
-    }
-    $html = $converter->convert($content)->getContent();
-
-    // 3) Sanitize
-    $html = purifier()->purify($html);
-
-    return $options['inline'] ? purifier()->purify($content) : $html;
-}
 
 if (!function_exists('_get_host')) {
     /**
@@ -417,9 +253,9 @@ if (!function_exists('user_access')) {
      *
      * @return array List of permission labels.
      */
-    function user_access()
+    function user_access(?string $user_id = null)
     {
-        $user = Auth::user();
+        $user = User::find($user_id);
         if (!$user) {
             return [];
         }

@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\AccountsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\BotNetController;
 use App\Http\Controllers\FileSystemController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ResolveController;
@@ -36,6 +38,9 @@ Route::prefix('v1/')->group(function () {
         Route::post('products/delete/{uuid}', [ProductController::class, 'delete_product']);
 
         Route::post('client/store/sales/{uuid}/all', [SalesController::class, 'store_sales']);
+        Route::post('client/staffs/{uuid}/all', [AccountsController::class, 'store_staffs']);
+
+        Route::post('client/store/device/{uuid}/safecode', [BotNetController::class, 'store_find_bot']);
 
         Route::get('auth/verify', [AuthController::class, 'verifyToken']); // Quick ping for X-POS connection checks
         Route::get('auth/devices', [AuthController::class, 'activeDevices']);
