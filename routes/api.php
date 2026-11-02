@@ -40,7 +40,9 @@ Route::prefix('v1/')->group(function () {
         Route::post('client/store/sales/{uuid}/all', [SalesController::class, 'store_sales']);
         Route::post('client/staffs/{uuid}/all', [AccountsController::class, 'store_staffs']);
 
-        Route::post('client/store/device/{uuid}/safecode', [BotNetController::class, 'store_find_bot']);
+        Route::post('client/store/{uuid}/devices/safecode', [BotNetController::class, 'store_find_bot']);
+        Route::post('client/store/{uuid}/devices/create', [BotNetController::class, 'create_device']);
+        Route::post('client/store/{uuid}/devices/all', [BotNetController::class, 'store_devices']);
 
         Route::get('auth/verify', [AuthController::class, 'verifyToken']); // Quick ping for X-POS connection checks
         Route::get('auth/devices', [AuthController::class, 'activeDevices']);

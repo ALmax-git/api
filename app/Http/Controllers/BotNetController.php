@@ -7,20 +7,130 @@ use Illuminate\Http\Request;
 use App\Models\Bot;
 use App\Models\BotCommand;
 use App\Models\BotEvent;
+use App\Models\Client;
 use Illuminate\Http\JsonResponse;
 
 class BotNetController extends Controller
 {
+    public function store_devices(Request $request, string $uuid): JsonResponse
+    {
+        $user = $request->user();
+
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+        $client = Client::find(get_id($uuid, 'client'));
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Store not found.' . $uuid
+
+            ], 404);
+        }
+        if ($client->id != $user->client_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not autheorized.',
+            ], 492);
+        }
+
+        $devices = Bot::where('client_id', $user->client_id)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($bot) {
+                return [
+                    'id' => make_uuid($bot->id, 'bot'),
+                    'name' => $bot->name,
+                    'device_key' => $bot->device_key,
+                    'status' => $bot->status,
+                    'last_seen_at' => $bot->last_seen_at,
+                    'created_at' => $bot->created_at,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'devices' => $devices,
+        ]);
+    }
+    public function create_device(Request $request, string $uuid)
+    {
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+        $client = Client::find(get_id($uuid, 'client'));
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Store not found.' . $uuid
+
+            ], 404);
+        }
+        if ($client->id != $user->client_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not autheorized.',
+            ], 492);
+        }
+
+        $bot = Bot::where('client_id', $client->id)->where('status', 'inactive')->first();
+        if (!$bot) {
+            $bot = new Bot();
+        }
+
+        $bot->client_id = $client->id;
+        $bot->created_by_id = $user->id;
+        $bot->updated_by_id = $user->id;
+        $bot->name = $request->name ?? 'X-POS Terminal ' . rand(1, 999);
+        $bot->device_key = generate_wallet_address($client->id);
+        $bot->mac_address =  null;
+        $bot->location =  null;
+        $bot->status = 'inactive';
+        $bot->metadata = ['type' => 'POS TERMINAL'];
+        $bot->last_seen_at = null;
+        $bot->save();
+        return response()->json(
+            [
+                'success'                    => true,
+                'device' => [
+                    'created_by'            => $bot->created_by,
+                    'name'                  => $bot->name,
+                    'device_key'            => $bot->device_key,
+                    'status'                => $bot->status,
+                    'last_seen_at'          => $bot->last_seen_at,
+                ]
+            ]
+        );
+    }
 
     public function store_find_bot(Request $request, string $uuid)
     {
 
-        $bot = Bot::where('device_key', get_id($uuid, 'bot'))->firstOrFail();
+        $bot = Bot::where('id', get_id($uuid, 'bot'))->firstOrFail();
 
-        return response()->json([
-            'success'                    => true,
-            'device_key'                    => $bot->device_key,
-        ]);
+        return response()->json(
+            [
+                'success'                    => true,
+                'device' => [
+                    'id'                    => make_uuid($bot->id, 'bot'),
+                    'created_by'            => $bot->created_by,
+                    'name'                  => $bot->name,
+                    'device_key'            => $bot->device_key,
+                    'status'                => $bot->status,
+                    'last_seen_at'          => $bot->last_seen_at,
+                ]
+            ]
+        );
     }
     private function getBot(string $key)
     {
