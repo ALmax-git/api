@@ -95,7 +95,7 @@ class BotNetController extends Controller
         $bot->device_key = generate_wallet_address($client->id);
         $bot->mac_address =  null;
         $bot->location =  null;
-        $bot->status = 'pairing';
+        $bot->status = 'inactive';
         $bot->metadata = ['type' => 'POS TERMINAL'];
         $bot->last_seen_at = null;
         $bot->save();
