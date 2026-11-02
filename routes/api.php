@@ -12,6 +12,7 @@ use App\Http\Controllers\SalesController;
 use App\Http\Middleware\EnsureTokenIsValid;
 use App\Models\User;
 
+
 Route::prefix('v1/')->group(function () {
 
     Route::post('apps/data/{xnamespace}', [AuthController::class, 'app_data']);
@@ -22,6 +23,7 @@ Route::prefix('v1/')->group(function () {
         Route::post('auth/register', [AuthController::class, 'register'])->withoutMiddleware(EnsureTokenIsValid::class);
         Route::post('engine/resolve', [AuthController::class, 'resolve']);
         Route::POST('auth/register-device', [AuthController::class, 'register_device']);
+        Route::POST('device/email/activate/{device_key}', [AuthController::class, 'email_device_activation']);
         Route::POST('auth/device-activation', [AuthController::class, 'device_activation']);
     });
 

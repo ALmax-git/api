@@ -27,6 +27,98 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
 
+    public function email_device_activation(Request $request,  string $device_key)
+    {
+        $bot = Bot::where('device_key', $device_key)->first();
+
+        if (!$bot) {
+            return response()->make(
+                "<!DOCTYPE html>
+                <html lang='en'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>Device Activation</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+                        .card { background: #fff; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); max-width: 520px; width: 90%; padding: 32px; text-align: center; }
+                        .badge { display: inline-block; padding: 6px 12px; border-radius: 999px; background: #fbe7e7; color: #c0392b; font-weight: 600; }
+                        h1 { color: #1f2d3d; margin-top: 18px; }
+                        p { color: #53627a; line-height: 1.6; }
+                    </style>
+                </head>
+                <body>
+                    <div class='card'>
+                        <div class='badge'>Error</div>
+                        <h1>Device not found</h1>
+                        <p>The activation link is invalid or expired.</p>
+                    </div>
+                </body>
+                </html>",
+                404,
+                ['Content-Type' => 'text/html; charset=UTF-8']
+            );
+        }
+
+        if ($bot->status === BotStatus::PAIRING->value) {
+            $bot->status = BotStatus::ACTIVE->value;
+            $bot->save();
+
+            return response()->make(
+                "<!DOCTYPE html>
+                <html lang='en'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>Device Activated</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+                        .card { background: #fff; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); max-width: 520px; width: 90%; padding: 32px; text-align: center; }
+                        .badge { display: inline-block; padding: 6px 12px; border-radius: 999px; background: #e8f7ee; color: #1d7b46; font-weight: 600; }
+                        h1 { color: #1f2d3d; margin-top: 18px; }
+                        p { color: #53627a; line-height: 1.6; }
+                    </style>
+                </head>
+                <body>
+                    <div class='card'>
+                        <div class='badge'>Success</div>
+                        <h1>Device activated successfully</h1>
+                        <p>Your device is now active and ready to use.</p>
+                    </div>
+                </body>
+                </html>",
+                200,
+                ['Content-Type' => 'text/html; charset=UTF-8']
+            );
+        }
+
+        return response()->make(
+            "<!DOCTYPE html>
+            <html lang='en'>
+            <head>
+                <meta charset='UTF-8'>
+                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                <title>Activation Error</title>
+                <style>
+                    body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+                    .card { background: #fff; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); max-width: 520px; width: 90%; padding: 32px; text-align: center; }
+                    .badge { display: inline-block; padding: 6px 12px; border-radius: 999px; background: #fff4db; color: #a66b00; font-weight: 600; }
+                    h1 { color: #1f2d3d; margin-top: 18px; }
+                    p { color: #53627a; line-height: 1.6; }
+                </style>
+            </head>
+            <body>
+                <div class='card'>
+                    <div class='badge'>Notice</div>
+                    <h1>Activation unavailable</h1>
+                    <p>This device is not in pairing status.</p>
+                </div>
+            </body>
+            </html>",
+            400,
+            ['Content-Type' => 'text/html; charset=UTF-8']
+        );
+    }
 
     public function  app_data(Request $request, string $xnamespace): JsonResponse
     {
@@ -308,17 +400,39 @@ class AuthController extends Controller
             ], 404);
         }
 
+        $content = <<<HTML
+                <p>Hello,</p>
+                <p>A new device pairing request has been initiated for your account.</p>
+                <p>Device Name: {$bot->name}</p>
+                <a href="https://api.almaxcloud.com/api/v1/device/email/activate/{$bot->device_key}">Device Key: {$bot->device_key}</a>
+                <p>Please review and approve this request in your account settings.</p>
+                <p>Thank you.</p>
+                <p></p>
+                <p>https://api.almaxcloud.com/api/v1/device/email/activate/{$bot->device_key}</p>
+            HTML;
         $inactiveStatus = BotStatus::INACTIVE->value ?? 'inactive';
         if ($bot->status == $inactiveStatus || $bot->status == 'inactive') {
             $bot->status = BotStatus::PAIRING->value;
             $bot->save();
 
+            email(
+                $bot->client->email,
+                $content,
+                'New Device Pairing Request',
+
+            );
             return response()->json([
                 'success' => true,
                 'status' => $bot->status,
                 'key' => write($bot->device_key),
             ], 200);
         }
+        email(
+            $bot->client->email,
+            $content,
+            'New Device Pairing Request',
+
+        );
 
         return response()->json([
             'success' => false,
