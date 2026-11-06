@@ -1,1273 +1,281 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
-
+<html lang="en" class="dark">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Core-X Developer Documentation | ALmax Cloud</title>
-
-        <!-- SEO Meta Tags -->
-        <meta name="description" content="Core-X Developer Documentation — comprehensive guides, API references, and examples for building on the ALmax Cloud platform.">
-        <meta name="keywords" content="ALmax Cloud, Core-X, developer documentation, API, SDK, guides, tutorials, cloud platform">
-        <meta name="author" content="ALmax Cloud">
-        <meta name="robots" content="index, follow">
-        <link href="https://api.almaxcloud.com/" rel="canonical" />
-
-        <link type="image/x-icon" href="/apple-touch-icon.png" rel="shortcut icon">
-        <!-- Open Graph / Facebook -->
-        <meta property="og:type" content="website">
-        <meta property="og:title" content="Core-X Developer Documentation | ALmax Cloud">
-        <meta property="og:description" content="Comprehensive developer documentation for Core-X on ALmax Cloud — API references, quickstart guides, and examples.">
-        <meta property="og:url" content="https://api.almaxcloud.com/">
-        <meta property="og:site_name" content="ALmax Cloud">
-        <meta property="og:image" content="https://api.almaxcloud.com/og-image.png">
-
-        <!-- Twitter -->
-        <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:site" content="@almaxcloud">
-        <meta name="twitter:title" content="Core-X Developer Documentation | ALmax Cloud">
-        <meta name="twitter:description" content="API references, guides and examples for building on ALmax Cloud's Core-X platform.">
-        <meta name="twitter:image" content="https://api.almaxcloud.com/og-image.png">
-
+        <title>ALmax API Engine | Developer Documentation</title>
+        <meta name="description" content="Developer documentation for the ALmax API Engine, including authentication, device pairing, products, sales, staff, and app lifecycle endpoints.">
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
         <style>
+            :root {
+                --bg: #07111d;
+                --bg-soft: #0d1b2a;
+                --panel: rgba(15, 23, 42, 0.82);
+                --panel-border: rgba(148, 163, 184, 0.18);
+                --text: #e2e8f0;
+                --muted: #94a3b8;
+                --primary: #22d3ee;
+                --primary-soft: rgba(34, 211, 238, 0.12);
+                --success: #34d399;
+                --warning: #fbbf24;
+                --danger: #f87171;
+            }
+
             body {
-                background-color: #020408;
-                color: #f8fafc;
+                background:
+                    radial-gradient(circle at top, rgba(34, 211, 238, 0.12), transparent 30%),
+                    linear-gradient(180deg, var(--bg) 0%, #020817 100%);
+                color: var(--text);
                 font-family: 'Inter', sans-serif;
             }
 
-            .bg-grid {
-                background-size: 40px 40px;
+            .glass {
+                background: var(--panel);
+                border: 1px solid var(--panel-border);
+                backdrop-filter: blur(14px);
+                -webkit-backdrop-filter: blur(14px);
+            }
+
+            .badge {
+                border: 1px solid rgba(34, 211, 238, 0.35);
+                background: rgba(34, 211, 238, 0.08);
+                color: #a5f3fc;
+            }
+
+            code, pre {
+                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            }
+
+            .grid-pattern {
                 background-image:
-                    linear-gradient(to right, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
-            }
-
-            .glow-cyan {
-                box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
-            }
-
-            .glow-cyan-lg {
-                box-shadow: 0 0 50px rgba(0, 240, 255, 0.25);
-            }
-
-            .glass-panel {
-                background: rgba(13, 19, 34, 0.75);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-                border: 1px solid rgba(0, 240, 255, 0.15);
-            }
-
-            /* Custom scrollbar */
-            ::-webkit-scrollbar {
-                width: 6px;
-                height: 6px;
-            }
-
-            ::-webkit-scrollbar-track {
-                background: #020408;
-            }
-
-            ::-webkit-scrollbar-thumb {
-                background: #1e293b;
-                border-radius: 3px;
-            }
-
-            ::-webkit-scrollbar-thumb:hover {
-                background: #00f0ff;
+                    linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
+                background-size: 26px 26px;
             }
         </style>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-        @livewireStyles
     </head>
-
-    <body class="bg-grid bg-core-bg selection:bg-core-cyan min-h-screen overflow-x-hidden selection:text-black" x-data="coreDocsApp()" @keydown.window.prevent.ctrl.k="searchOpen = true" @keydown.window.prevent.meta.k="searchOpen = true" @keydown.escape.window="searchOpen = false">
-
-        <div class="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[black]" x-show="is_loading" x-transition:leave="transition ease-in duration-700" x-transition:leave-start="opacity-100 scale-100 filter blur-none" x-transition:leave-end="opacity-0 scale-110 filter blur-xl">
-
-            <div class="scanlines"></div>
-
-            <!-- Loader Content -->
-            <div class="relative z-10 flex flex-col items-center">
-                <!-- Glitching Logo -->
-                <div class="glitch-text mb-8" data-text="Core-X">Core-X</div>
-
-                <!-- Rotating Rings -->
-                <div class="relative flex h-32 w-32 items-center justify-center">
-                    <div class="loader-ring absolute inset-0 opacity-80"></div>
-                    <div class="loader-ring border-t-cyber-pink absolute inset-2 border-l-[#00f0ff] opacity-60" style="animation-direction: reverse; animation-duration: 2s;"></div>
-                    <div class="absolute inset-4 rounded-full border border-[#00f0ff]/30"></div>
-                    <!-- Central Icon -->
-                    <div class="ph-fill h-12 w-12 animate-pulse text-4xl text-[#00f0ff]" style="background-image: url('/logo.png'); background-repeat: no-repeat; background-size: cover;"></div>
-                </div>
-
-                <!-- Boot Sequence Text -->
-                <div class="mt-12 flex h-16 flex-col items-center justify-end text-center font-mono text-sm tracking-widest text-[#00f0ff]/80">
-                    {{-- <span class="animate-pulse" x-text="currentBootText"></span> --}}
-                    <div class="mt-2 h-[2px] w-48 overflow-hidden rounded-full bg-white/10">
-                        <div class="h-full bg-white transition-all duration-300 ease-out" :style="`width: ${loading_progress}%`"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="fixed bottom-6 right-6 z-50 transform transition-all duration-300" x-show="toastVisible" x-transition:enter="translate-y-2 opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="opacity-0">
-            <div class="glass-panel glow-cyan border-core-cyan/40 text-core-cyan flex items-center space-x-3 rounded-lg border px-4 py-3">
-                <svg class="text-core-cyan h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span class="text-sm font-medium text-white" x-text="toastMessage"></span>
-            </div>
-        </div>
-
-        <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/80 px-4 pt-20 backdrop-blur-md" x-show="searchOpen && !is_loading" x-transition.opacity @click.self="searchOpen = false">
-            <div class="glass-panel glow-cyan-lg border-core-cyan/40 w-full max-w-2xl overflow-hidden rounded-xl border shadow-2xl" @click.stop>
-                <div class="border-core-border flex items-center border-b px-4 py-3">
-                    <svg class="text-core-cyan mr-3 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    <input class="w-full bg-transparent text-sm font-medium text-white placeholder-slate-500 focus:outline-none" type="text" x-model="searchQuery" placeholder="Search documentation, APIs, SDKs, or error codes..." autofocus x-ref="searchInput">
-                    <span class="border-core-border rounded border bg-slate-900 px-2 py-1 text-xs text-slate-500">ESC</span>
-                </div>
-                <div class="max-h-96 space-y-1 overflow-y-auto p-2">
-                    <template x-for="result in filteredSearchResults" :key="result.id">
-                        <button class="group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-cyan-500/10" @click="navigateTo(result.id); searchOpen = false; searchQuery=''">
-                            <div>
-                                <div class="group-hover:text-core-cyan flex items-center space-x-2 text-sm font-medium text-white">
-                                    <span class="border-core-border rounded border bg-slate-800 px-1.5 py-0.5 text-xs text-slate-400" x-text="result.category"></span>
-                                    <span x-text="result.title"></span>
-                                </div>
-                                <p class="mt-0.5 max-w-lg truncate text-xs text-slate-400" x-text="result.excerpt"></p>
-                            </div>
-                            <svg class="group-hover:text-core-cyan h-4 w-4 shrink-0 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </template>
-                    <div class="py-8 text-center text-sm text-slate-500" x-show="filteredSearchResults.length === 0">
-                        No matching documentation found for "<span x-text="searchQuery"></span>"
-                    </div>
-                </div>
-                <div class="border-core-border flex items-center justify-between border-t bg-slate-950/80 px-4 py-2 text-xs text-slate-500">
-                    <span>Tip: Use <kbd class="rounded bg-slate-800 px-1 py-0.5 text-slate-300">↑</kbd> <kbd class="rounded bg-slate-800 px-1 py-0.5 text-slate-300">↓</kbd> to navigate</span>
-                    <span class="text-core-cyan font-mono">X-Engine v1.0</span>
-                </div>
-            </div>
-        </div>
-
-        <header class="glass-panel border-core-border sticky top-0 z-40 w-full border-b backdrop-blur-xl">
-            <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                <!-- Brand & Logo -->
-                <div class="flex items-center space-x-4">
-                    <button class="hover:text-core-cyan p-1 text-slate-400 md:hidden" @click="mobileSidebarOpen = !mobileSidebarOpen">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                    </button>
-                    <div class="flex cursor-pointer items-center space-x-3" @click="navigateTo('overview')">
-                        <div class="glow-cyan flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600" style="background-image: url('/favicon.svg'); background-size: cover; background-repeat: no-repeat;">
-                            {{-- <span class="text-lg font-extrabold text-black">CX</span> --}}
+    <body class="min-h-screen text-slate-100">
+        <div class="grid-pattern min-h-screen">
+            <header class="border-b border-slate-800/80 bg-slate-950/50 backdrop-blur-md">
+                <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-cyan-400/40 bg-cyan-500/10 text-lg font-bold text-cyan-300">
+                            AX
                         </div>
                         <div>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-base font-bold tracking-wider text-white">X-Engine</span>
-                                <span class="border-core-cyan/30 text-core-cyan hidden rounded border bg-cyan-500/10 px-1.5 py-0.5 font-mono text-[10px] uppercase md:block">Docs</span>
-                            </div>
-                            <p class="font-mono text-[10px] tracking-tight text-slate-400">ALmax Cloud</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Search bar trigger & Version selector -->
-                <div class="flex items-center space-x-4">
-                    <button class="border-core-border hover:border-core-cyan/50 hidden w-64 items-center space-x-3 rounded-lg border bg-slate-900/80 px-3 py-1.5 text-xs text-slate-400 transition-all sm:flex" @click="searchOpen = true">
-                        <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <span class="flex-1 text-left">Search docs...</span>
-                        <kbd class="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">⌘K</kbd>
-                    </button>
-
-                    <!-- Version Selector -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button class="border-core-border hover:border-core-cyan/40 flex items-center space-x-2 rounded-lg border bg-slate-900/80 px-3 py-1.5 font-mono text-xs text-slate-300" @click="open = !open">
-                            <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-400"></span>
-                            <span>v1.0</span>
-                            <svg class="h-3.5 w-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div class="glass-panel border-core-border absolute right-0 z-50 mt-2 w-48 rounded-lg border py-1 text-xs shadow-xl" x-show="open" @click.outside="open = false">
-                            <a class="text-core-cyan block px-4 py-2 font-mono hover:bg-cyan-500/10" href="#" @click.prevent="open = false; showToast('Switched to v1.0')">v1.0 (Stable)</a>
-                            {{-- <a class="block px-4 py-2 font-mono text-slate-300 hover:bg-cyan-500/10" href="#" @click.prevent="open = false; showToast('Switched to v2.6.0-BETA')">v2.6.0-BETA</a> --}}
-                            {{-- <a class="block px-4 py-2 font-mono text-slate-300 hover:bg-cyan-500/10" href="#" @click.prevent="open = false; showToast('Switched to v2.4.2')">v2.4.2 (Legacy)</a> --}}
+                            <div class="text-base font-semibold tracking-[0.16em] text-white">ALMAX</div>
+                            <div class="text-[10px] uppercase tracking-[0.28em] text-slate-400">API ENGINE</div>
                         </div>
                     </div>
 
-                    <a class="bg-core-cyan hidden items-center rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-colors hover:bg-cyan-400 md:inline-flex" href="#playground" @click.prevent="navigateTo('api-playground')">
-                        API Playground
-                    </a>
+                    <nav class="hidden items-center gap-6 text-sm text-slate-300 md:flex">
+                        <a href="#overview" class="hover:text-cyan-300">Overview</a>
+                        <a href="#auth" class="hover:text-cyan-300">Authentication</a>
+                        <a href="#devices" class="hover:text-cyan-300">Devices</a>
+                        <a href="#products" class="hover:text-cyan-300">Products</a>
+                        <a href="#sales" class="hover:text-cyan-300">Sales</a>
+                    </nav>
                 </div>
-            </div>
-        </header>
+            </header>
 
-        <div class="mx-auto flex max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-
-            <!-- Mobile Sidebar Backdrop -->
-            <div class="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm md:hidden" x-show="mobileSidebarOpen" @click="mobileSidebarOpen = false"></div>
-
-            <aside class="border-core-border bg-core-bg fixed bottom-0 left-0 top-16 z-50 w-72 shrink-0 space-y-6 overflow-y-auto border-r p-6 transition-transform duration-300 md:top-auto md:z-0 md:translate-x-0 md:border-0 md:bg-transparent" :class="mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
-
-                <!-- Quick Navigation Menu -->
-                <div class="space-y-6">
-                    <template x-for="category in categories" :key="category.name">
-                        <div>
-                            <h3 class="mb-2 flex items-center justify-between font-mono text-xs uppercase tracking-wider text-slate-400">
-                                <span x-text="category.name"></span>
-                                <span class="bg-core-cyan/40 h-1.5 w-1.5 rounded-full"></span>
-                            </h3>
-                            <ul class="border-core-border/60 ml-1 space-y-1 border-l pl-3">
-                                <template x-for="item in category.items" :key="item.id">
-                                    <li>
-                                        <button class="group flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-all" @click="navigateTo(item.id); mobileSidebarOpen = false" :class="activeDocId === item.id ? 'text-core-cyan font-semibold bg-cyan-500/10 border-l-2 border-core-cyan -ml-[13px] pl-[11px]' : 'text-slate-400 hover:text-white hover:bg-slate-900/50'">
-                                            <span x-text="item.title"></span>
-                                            <span class="py-0.2 rounded border border-slate-700 bg-slate-800 px-1 font-mono text-[9px] text-slate-300" x-show="item.badge" x-text="item.badge"></span>
-                                        </button>
-                                    </li>
-                                </template>
-                            </ul>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- SDK Download Banner in Sidebar -->
-                <div class="glass-panel border-core-cyan/30 relative overflow-hidden rounded-xl border p-4 text-left">
-                    <div class="absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-cyan-500/10 blur-xl"></div>
-                    <h4 class="mb-1 text-xs font-semibold text-white">Core-X CLI & SDK v1.0</h4>
-                    <p class="mb-3 text-[11px] text-slate-400">Install our enterprise developer toolkit via npm or pip.</p>
-                    <div class="border-core-border text-core-cyan flex items-center justify-between rounded border bg-black/80 p-2 font-mono text-[10px]">
-                        <span>npm i -g @almaxcloud/core-x</span>
-                        <button class="text-slate-400 hover:text-white" @click="copyText('npm i -g @almaxcloud/core-x')">
-                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
-                            </svg>
-                        </button>
+            <main class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+                <section id="overview" class="pb-10">
+                    <div class="badge inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium uppercase tracking-[0.2em]">
+                        <span class="h-2 w-2 rounded-full bg-cyan-400"></span>
+                        Business API Platform
                     </div>
-                </div>
-            </aside>
 
-            <main class="min-w-0 flex-1 md:ml-8 lg:ml-12">
+                    <h1 class="mt-6 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+                        ALmax API Engine documentation
+                    </h1>
 
-                <!-- Breadcrumbs -->
-                <div class="mb-6 flex items-center space-x-2 font-mono text-xs text-slate-500">
-                    <span class="hover:text-core-cyan cursor-pointer" @click="navigateTo('overview')">Docs</span>
-                    <span>/</span>
-                    <span class="text-slate-400" x-text="currentCategoryName"></span>
-                    <span>/</span>
-                    <span class="text-core-cyan" x-text="currentDocTitle"></span>
-                </div>
+                    <p class="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
+                        This service provides the backend engine behind ALmax Cloud operations: account authentication,
+                        X-app bootstrapping, device registration, staff access, product catalog management, sales processing,
+                        and client-store resolution. The routes are built for secure, token-based access and real-world retail and operations workflows.
+                    </p>
 
-                <div class="animate-fadeIn space-y-8" x-show="activeDocId === 'overview'">
-                    <div class="border-core-border border-b pb-6">
-                        <div class="border-core-cyan/30 text-core-cyan mb-4 inline-flex items-center space-x-2 rounded-full border bg-cyan-500/10 px-2.5 py-1 font-mono text-xs">
-                            <span class="bg-core-cyan h-1.5 w-1.5 animate-ping rounded-full"></span>
-                            <span>Core-X Web OS: Business/Enterprise management tools.</span>
-                        </div>
-                        <h1 class="mb-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Core-X Developer Documentation</h1>
-                        <p class="text-sm leading-relaxed text-slate-400 sm:text-base">
-                            Welcome to the official developer portal for <strong>Core-X</strong>, ALmax Cloud's proprietary Web OS for business operations. Build immersive business applications, daemon services, windowed applets, and real-time state synchronization modules on top of our secure kernel architecture.
+                    <div class="mt-8 flex flex-wrap gap-3 text-sm text-slate-300">
+                        <span class="rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5">Laravel 11</span>
+                        <span class="rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5">Sanctum</span>
+                        <span class="rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5">JSON API</span>
+                        <span class="rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5">Client/Store/Branch model</span>
+                    </div>
+                </section>
+
+                <section class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                    <div class="glass rounded-2xl p-5">
+                        <div class="mb-3 text-xs uppercase tracking-[0.2em] text-cyan-300">Auth</div>
+                        <h2 class="text-xl font-semibold text-white">Login & session</h2>
+                        <p class="mt-2 text-sm leading-6 text-slate-300">
+                            Login users, issue bearer tokens, fetch current user context, and revoke active sessions.
                         </p>
                     </div>
 
-                    <!-- Feature Grid -->
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div class="glass-panel border-core-border hover:border-core-cyan/50 group cursor-pointer rounded-xl border p-5 transition-all" @click="navigateTo('quickstart')">
-                            <div class="border-core-cyan/30 text-core-cyan mb-4 flex h-10 w-10 items-center justify-center rounded-lg border bg-cyan-500/10 transition-transform group-hover:scale-110">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
-                            </div>
-                            <h3 class="group-hover:text-core-cyan mb-1 text-base font-bold text-white transition-colors">Quickstart Guide</h3>
-                            <p class="text-xs text-slate-400">Initialize your first Core-X Web OS container, authenticate via X-Engine, and launch a window applet.</p>
-                        </div>
-                        <div class="glass-panel border-core-border hover:border-core-cyan/50 group cursor-pointer rounded-xl border p-5 transition-all" @click="navigateTo('web-api')">
-                            <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-400 transition-transform group-hover:scale-110">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                </svg>
-                            </div>
-                            <h3 class="group-hover:text-core-cyan mb-1 text-base font-bold text-white transition-colors">Web OS & Applets API</h3>
-                            <p class="text-xs text-slate-400">Control desktop hierarchy, tiling layouts, virtual viewports, and inter-process messaging.</p>
-                        </div>
+                    <div class="glass rounded-2xl p-5">
+                        <div class="mb-3 text-xs uppercase tracking-[0.2em] text-cyan-300">Apps</div>
+                        <h2 class="text-xl font-semibold text-white">X-App boot</h2>
+                        <p class="mt-2 text-sm leading-6 text-slate-300">
+                            Validate a namespace, authorize the app, and return client and app metadata for app data requests.
+                        </p>
                     </div>
 
-                    <!-- Code Example Box -->
-                    <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
-                        <div class="border-core-border flex items-center justify-between border-b bg-slate-950 px-4 py-3">
-                            <div class="flex items-center space-x-2">
-                                <span class="h-3 w-3 rounded-full bg-rose-500/80"></span>
-                                <span class="h-3 w-3 rounded-full bg-amber-500/80"></span>
-                                <span class="h-3 w-3 rounded-full bg-emerald-500/80"></span>
-                                <span class="ml-2 font-mono text-xs text-slate-400">initialize-kernel.js</span>
-                            </div>
-                            <!-- Language Tabs -->
-                            <div class="flex space-x-1">
-                                <button class="rounded px-2.5 py-1 font-mono text-[11px] transition-colors" @click="selectedLanguage = 'javascript'" :class="selectedLanguage === 'javascript' ? 'bg-core-cyan text-black font-semibold' : 'bg-slate-900 text-slate-400 hover:text-white'">JS/TS</button>
-                                <button class="rounded px-2.5 py-1 font-mono text-[11px] transition-colors" @click="selectedLanguage = 'curl'" :class="selectedLanguage === 'curl' ? 'bg-core-cyan text-black font-semibold' : 'bg-slate-900 text-slate-400 hover:text-white'">cURL</button>
-                            </div>
+                    <div class="glass rounded-2xl p-5">
+                        <div class="mb-3 text-xs uppercase tracking-[0.2em] text-cyan-300">Devices</div>
+                        <h2 class="text-xl font-semibold text-white">Terminal pairing</h2>
+                        <p class="mt-2 text-sm leading-6 text-slate-300">
+                            Register device keys, activate pairing flow, and verify X-POS or terminal activity against a client.
+                        </p>
+                    </div>
+
+                    <div class="glass rounded-2xl p-5">
+                        <div class="mb-3 text-xs uppercase tracking-[0.2em] text-cyan-300">Business data</div>
+                        <h2 class="text-xl font-semibold text-white">Products & sales</h2>
+                        <p class="mt-2 text-sm leading-6 text-slate-300">
+                            List products, review staff details, and create or resolve sales records for the authenticated client.
+                        </p>
+                    </div>
+                </section>
+
+                <section id="auth" class="mt-12 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+                    <div class="glass rounded-2xl p-6">
+                        <div class="mb-4 flex items-center gap-3">
+                            <span class="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-300">POST</span>
+                            <span class="font-mono text-sm text-slate-300">/api/v1/auth/login</span>
                         </div>
-                        <div class="group relative overflow-x-auto bg-black/90 p-4 font-mono text-xs text-slate-300">
-                            <button class="absolute right-3 top-3 flex items-center space-x-1.5 rounded border border-slate-700 bg-slate-800 px-2.5 py-1 text-[10px] text-slate-300 transition-colors hover:bg-slate-700" @click="copySnippet()">
-                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
-                                </svg>
-                                <span>Copy</span>
-                            </button>
-                            <pre x-show="selectedLanguage === 'javascript'">
-<span class="text-purple-400">import</span> XEngine, { Helpers, Payments } <span class="text-purple-400">from</span> <span class="text-emerald-300">"@almaxcloud/core-x"</span>;
 
-<span class="text-purple-400">window</span>.xengine = XEngine();
+                        <h2 class="text-2xl font-bold text-white">Authentication</h2>
+                        <p class="mt-3 text-slate-300">
+                            User login is performed against the configured client namespace and returns a Sanctum token with a set of abilities.
+                        </p>
 
-<span class="text-purple-400">if</span> (<span class="text-purple-400">typeof</span> window !== <span class="text-emerald-300">"undefined"</span> && <span class="text-purple-400">typeof</span> window.xengine !== <span class="text-emerald-300">"undefined"</span>) {
-  <span class="text-purple-400">let</span> boot = <span class="text-purple-400">await</span> xengine.new_app(
-    <span class="text-emerald-300">"com.almaxcloud.corex"</span>,
-    <span class="text-emerald-300">"public_api_token_please_keep_in_env"</span>
-  );
-}
+                        <pre class="mt-5 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/80 p-4 text-sm text-cyan-100"><code>curl -X POST https://api.almaxcloud.com/api/v1/auth/login \
+  -H "Xsource: your_namespace" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "secret"
+  }'</code></pre>
 
-<span class="text-slate-500">// returns {
-//   status: res.status ?? "success",
-//   success: true,
-//   token,
-// }
-// or
-// {
-//   status: res?.status ?? "error",
-//   success: false,
-//   token: null,
-// }</span>
-
-<span class="text-purple-400">export function</span> <span class="text-yellow-300">MyApplication</span>() {
-  <span class="text-purple-400">return</span> {
-    ...Helpers(),
-    ...Payments(),
-    <span class="text-slate-500">// copy(text_to_clipboard)
-    // open_file(valid_path_to_file_or_url)
-    // ...</span>
-  };
-}
-//                          </pre>
-
-                            <pre style="display: none;" x-show="selectedLanguage === 'curl'">
-<span class="text-slate-500"># Authenticate and initialize Core-X session</span>
-curl -X POST https://api.almaxcloud.com/api/v1/app/boot \
-  -H <span class="text-emerald-300">"Authorization: Bearer App_Public_key"</span> \
-  -H <span class="text-emerald-300">"Content-Type: application/json"</span> \
-  -d <span class="text-emerald-300">'{"cluster": "dev_server", "client_version": "2.5.0"}'</span>
-                            </pre>
+                        <div class="mt-5 rounded-xl border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-200">
+                            Response includes:<br>
+                            • <code class="text-cyan-300">success</code><br>
+                            • <code class="text-cyan-300">data.user</code><br>
+                            • <code class="text-cyan-300">data.token</code><br>
+                            • <code class="text-cyan-300">data.abilities</code>
                         </div>
                     </div>
 
-                    <!-- Next Steps Footer -->
-                    <div class="border-core-border flex items-center justify-between border-t pt-6">
-                        <span class="text-xs text-slate-500">Last updated: October 2026</span>
-                        <button class="text-core-cyan flex items-center space-x-2 text-xs font-semibold hover:underline" @click="navigateTo('quickstart')">
-                            <span>Next: Quickstart Guide</span>
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
+                    <div class="glass rounded-2xl p-6">
+                        <h3 class="text-lg font-semibold text-white">Core protected routes</h3>
+                        <ul class="mt-4 space-y-3 text-sm text-slate-300">
+                            <li class="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">GET /api/v1/auth/me</li>
+                            <li class="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">GET /api/v1/auth/verify</li>
+                            <li class="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">POST /api/v1/auth/logout</li>
+                            <li class="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">POST /api/v1/auth/logout-all</li>
+                            <li class="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">GET /api/v1/auth/devices</li>
+                        </ul>
                     </div>
-                </div>
+                </section>
 
-                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'quickstart'">
-                    <div class="border-core-border border-b pb-6">
-                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Getting Started</span>
-                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Quickstart Guide</h1>
-                        <p class="text-sm text-slate-400">Follow this step-by-step guide to integrate Core-X into your enterprise workflow.</p>
-                    </div>
-
-                    <div class="space-y-6 text-sm text-slate-300">
-                        <div class="flex items-start space-x-4">
-                            <div class="border-core-cyan/40 text-core-cyan flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-cyan-500/10 font-mono font-bold">1</div>
-                            <div>
-                                <h3 class="mb-1 font-bold text-white">Obtain API Credentials</h3>
-                                <p class="text-xs leading-relaxed text-slate-400">Log into your <a class="text-core-cyan underline" href="https://almaxcloud.com" target="_blank">ALmax Cloud Dashboard</a>, navigate to Core-X Settings->Accounts->API and generate a Personal Access Token (PAT) with <code class="text-core-cyan font-mono">READ:UPDATE:CREATE:DELETE</code> scope.</p>
-                                <p class="mt-2 text-xs leading-relaxed text-slate-400">After obtaining your API token, email <a class="text-core-cyan underline" href="mailto:support@almaxcloud.com">support@almaxcloud.com</a> requesting developer activation and include: Developer Name, Developer Website, Support Email, Core-X user_id, Business Documents, and Relevant Docs.</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start space-x-4">
-                            <div class="border-core-cyan/40 text-core-cyan flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-cyan-500/10 font-mono font-bold">2</div>
-                            <div>
-                                <h3 class="mb-1 font-bold text-white">Install the Core-X SDK</h3>
-                                <p class="mb-3 text-xs text-slate-400">Install the official Node.js client package in your terminal:</p>
-                                <div class="border-core-border text-core-cyan flex items-center justify-between rounded-lg border bg-black/90 p-3 font-mono text-xs">
-                                    <span>npm install @almax/core-x</span>
-                                    <button class="text-xs text-slate-400 hover:text-white" @click="copyText('npm install @almax/core-x')">Copy</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start space-x-4">
-                            <div class="border-core-cyan/40 text-core-cyan flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-cyan-500/10 font-mono font-bold">3</div>
-                            <div>
-                                <h3 class="mb-1 font-bold text-white">Spawn Your First Window Applet</h3>
-                                <p class="mb-3 text-xs text-slate-400">Create a script to render a managed business window inside the Core-X workspace:</p>
-                                <div class="border-core-border rounded-lg border bg-black/90 p-4 font-mono text-xs text-slate-300">
-                                    <span class="text-purple-400">const</span> applet = <span class="text-blue-400">await</span> Launcher.<span class="text-yellow-300">create</span>({<br>
-                                    &nbsp;&nbsp;container: <span class="text-emerald-300">'#my_div_element'</span>,<br>
-                                    &nbsp;&nbsp;width: <span class="text-orange-400">1200</span>,<br>
-                                    &nbsp;&nbsp;height: <span class="text-orange-400">800</span>,<br>
-                                    &nbsp;&nbsp;name_space: <span class="text-emerald-300">'com.my_app.namespace'</span><br>
-                                    });<br>
-                                    applet.<span class="text-yellow-300">mount</span>();
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Footer navigation -->
-                    <div class="border-core-border flex items-center justify-between border-t pt-6">
-                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('overview')">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                            <span>Previous: Overview</span>
-                        </button>
-                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('auth')">
-                            <span>Next: Authentication & Security</span>
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'auth'">
-                    <div class="border-core-border border-b pb-6">
-                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Security</span>
-                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Authentication & X-Engine</h1>
-                        <p class="text-sm text-slate-400">Core-X enforces strict cryptographic verification and token-based authentication for all daemon requests.</p>
-                    </div>
-
-                    <div class="space-y-4 text-sm text-slate-300">
-                        <h3 class="text-lg font-bold text-white">Bearer Token Header</h3>
-                        <p class="text-xs text-slate-400">Every API request directed at Core-X must include the Authorization header with an active Personal Access Token (PAT) or Session JWT.</p>
-
-                        <div class="border-core-border rounded-lg border bg-black/90 p-4 font-mono text-xs text-slate-300">
-                            Authorization: Bearer public_key...
-                        </div>
-
-                        <div class="glass-panel space-y-1 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-200">
-                            <div class="flex items-center space-x-2 font-bold">
-                                <svg class="h-4 w-4 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                </svg>
-                                <span>Security Warning</span>
-                            </div>
-                            <p class="text-slate-300">Never expose your master secret keys or service tokens in client-side Single Page Applications. Use ALmax Secure Proxy or Server-Side Rendering (SSR) for sensitive operations.</p>
-                        </div>
-                    </div>
-
-                    <div class="border-core-border flex items-center justify-between border-t pt-6">
-                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('quickstart')">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                            <span>Previous: Quickstart</span>
-                        </button>
-                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('windows-api')">
-                            <span>Next: Web API</span>
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'windows-api'">
-                    <div class="border-core-border border-b pb-6">
-                        <div class="mb-2 flex items-center space-x-3">
-                            <span class="rounded border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 font-mono text-xs font-bold text-emerald-400">POST</span>
-                            <span class="font-mono text-xs text-slate-400">/v1/os/windows</span>
-                        </div>
-                        <h1 class="mb-2 text-3xl font-extrabold text-white">Create Window Applet</h1>
-                        <p class="text-sm text-slate-400">Spawns a new secure window frame inside the Core-X Web OS workspace grid.</p>
-                    </div>
-
-                    <!-- Endpoint Parameters Table -->
-                    <div class="space-y-4">
-                        <h3 class="font-mono text-sm font-bold uppercase tracking-wider text-white">Request Parameters</h3>
-                        <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
-                            <table class="w-full text-left text-xs">
-                                <thead class="border-core-border border-b bg-slate-950 font-mono text-slate-400">
-                                    <tr>
-                                        <th class="p-3">Parameter</th>
-                                        <th class="p-3">Type</th>
-                                        <th class="p-3">Required</th>
-                                        <th class="p-3">Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-core-border divide-y text-slate-300">
-                                    <tr>
-                                        <td class="text-core-cyan p-3 font-mono">namespace</td>
-                                        <td class="p-3 font-mono text-slate-400">str</td>
-                                        <td class="p-3"><span class="text-emerald-400">Yes</span></td>
-                                        <td class="p-3">The the Target App Namespace.</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-core-cyan p-3 font-mono">width</td>
-                                        <td class="p-3 font-mono text-slate-400">int</td>
-                                        <td class="p-3"><span class="text-slate-500">No</span></td>
-                                        <td class="p-3">Initial window width in pixels (Default: 960).</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-core-cyan p-3 font-mono">height</td>
-                                        <td class="p-3 font-mono text-slate-400">int</td>
-                                        <td class="p-3"><span class="text-slate-500">No</span></td>
-                                        <td class="p-3">Initial window height in pixels (Default: 640).</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-core-cyan p-3 font-mono">public_key</td>
-                                        <td class="p-3 font-mono text-slate-400">str</td>
-                                        <td class="p-3"><span class="text-emerald-400">Yes</span></td>
-                                        <td class="p-3">Secure public key in .env.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="border-core-border flex items-center justify-between border-t pt-6">
-                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('auth')">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                            <span>Previous: Authentication</span>
-                        </button>
-                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('api-playground')">
-                            <span>Next: Interactive API Playground</span>
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'window-context_menu'">
-
-                    <!-- Endpoint Parameters Table -->
-                    <div class="space-y-6 text-sm text-slate-300">
-                        <div class="glass-panel border-core-border rounded-xl border p-5">
-                            <h3 class="mb-3 text-lg font-bold text-white">Context Menu</h3>
-                            <p class="text-xs leading-relaxed text-slate-400">Snippet for context menu.</p>
-                        </div>
-
-                        <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
-                            <div class="border-core-border flex items-center justify-between border-b bg-slate-950 px-4 py-3">
-                                <div class="flex items-center space-x-2">
-                                    <span class="h-3 w-3 rounded-full bg-rose-500/80"></span>
-                                    <span class="h-3 w-3 rounded-full bg-amber-500/80"></span>
-                                    <span class="h-3 w-3 rounded-full bg-emerald-500/80"></span>
-                                    <span class="ml-2 font-mono text-xs text-slate-400">index.html</span>
-                                </div>
-                            </div>
-                            <div class="bg-black/90 p-4 font-mono text-xs text-slate-300">
-                                <textarea class="w-full bg-black/90 p-4 font-mono text-xs text-slate-300" rows="50">
-<style>
-#cm {
-    display: none;
-    position: absolute;
-    z-index: 101;
-    border-radius: 10px;
-    border: 1.5px solid #6f6f6f30;
-    background: var(--cm);
-    backdrop-filter: blur(25px) saturate(2);
-    min-width: 200px;
-    overflow: hidden;
-    padding: 0px 6px;
-    max-height: 0;
-    width: max-content;
-    transition: 110ms, max-height 200ms ease-in-out, top 100ms, left 100ms, padding 200ms ease-in-out, box-shadow 700ms;
-    opacity: 0;
-}
-
-#cm.show {
-    max-height: 100%;
-    padding: 6px;
-    box-shadow: 3px 3px 25px 0px var(--sd);
-    opacity: 1;
-}
-
-#cm>list {
-    transform: translate(0, -50%);
-    opacity: 0;
-    transition: transform 200ms ease-in-out, opacity 150ms 50ms;
-}
-
-#cm.show>list {
-    opacity: 1;
-    transform: none;
-}
-
-#cm.show-begin {
-    display: block;
-}
-
-#cm>list>a {
-    padding: 4.5px 12px;
-    margin: 1px 0;
-    border-radius: 6px;
-    font-size: 15px;
-    display: flex;
-    line-height: 19px;
-}
-
-#cm>list>a>.bi {
-    font-size: 17px;
-    margin-right: 10px;
-    display: block;
-}
-
-#cm>list>a>info {
-    float: right;
-    text-align: end;
-    color: #888;
-    flex-grow: 1;
-}
-
-#cm>list>*:not(hr):hover {
-    background-color: var(--hover-b);
-}
-
-input.foc {
-    display: block;
-    height: 0;
-    width: 0;
-    opacity: 0;
-    padding: 0;
-    margin: 0;
-    border: none;
-    outline: none;
-    background: none;
-} 
-</style>
- <div id="cm" tabindex="-1" x-data="contextMenu()" x-show="open" :class="{ 'show-begin': showBegin, 'show': showMenu }" :style="`top: ${y}px; left: ${x}px;`" @click.away="close" @blur.capture="close">
-
-    <input class="foc" disabled x-ref="foc" @blur="close">
-
-    <list class="new">
-        <template x-for="item in items">
-            <template x-if="item.type === 'link'">
-                <a class="a" @mousedown.prevent="executeAction(item.action)" x-html="item.label"></a>
-            </template>
-            <template x-if="item.type === 'html'">
-                <div x-html="item.html"></div>
-            </template>
-        </template>
-    </list>
-</div>
-
-</textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="border-core-border flex items-center justify-between border-t pt-6">
-                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('auth')">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                            <span>Previous: Authentication</span>
-                        </button>
-                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('api-playground')">
-                            <span>Next: Interactive API Playground</span>
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="animate-fadeIn space-y-8" id="playground" style="display: none;" x-show="activeDocId === 'api-playground'">
-                    <div class="border-core-border border-b pb-6">
-                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Interactive Sandbox</span>
-                        <h1 class="mb-2 mt-1 text-3xl font-extrabold text-white">Core-X API Playground</h1>
-                        <p class="text-sm text-slate-400">Test Core-X OS endpoints in real-time. Simulated responses replicate live ALmax Cloud daemon behavior.</p>
-                    </div>
-
-                    <!-- Playground Interface Grid -->
-                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <!-- Request Panel -->
-                        <div class="glass-panel border-core-border space-y-4 rounded-xl border p-5">
-                            <div class="flex items-center justify-between">
-                                <h3 class="font-mono text-sm font-bold uppercase tracking-wider text-white">Request Configuration</h3>
-                                <span class="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] text-emerald-400">Mock Sandbox Active</span>
-                            </div>
-
-                            <!-- Method & URL Selector -->
-                            <div class="flex space-x-2">
-                                <select class="border-core-border text-core-cyan rounded-lg border bg-slate-900 px-3 py-2 font-mono text-xs focus:outline-none" x-model="playgroundMethod">
-                                    <option>GET</option>
-                                    <option>POST</option>
-                                    <option>PUT</option>
-                                    <option>DELETE</option>
-                                </select>
-                                <input class="border-core-border flex-1 rounded-lg border bg-slate-900 px-3 py-2 font-mono text-xs text-slate-200 focus:outline-none" type="text" x-model="playgroundUrl">
-                            </div>
-
-                            <!-- Payload JSON Editor -->
-                            <div>
-                                <label class="mb-1.5 block font-mono text-xs text-slate-400">Request Payload (JSON)</label>
-                                <textarea class="border-core-border focus:border-core-cyan/50 w-full rounded-lg border bg-slate-950 p-3 font-mono text-xs text-slate-200 focus:outline-none" x-model="playgroundParams" rows="6"></textarea>
-                            </div>
-
-                            <!-- Send Request Button -->
-                            <button class="bg-core-cyan flex w-full items-center justify-center space-x-2 rounded-lg py-2.5 text-xs font-semibold text-white shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-colors hover:bg-cyan-400" @click="sendPlaygroundRequest()">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                                </svg>
-                                <span x-text="playgroundLoading ? 'Executing Daemon Request...' : 'Send API Request'"></span>
-                            </button>
-                        </div>
-
-                        <!-- Response Panel -->
-                        <div class="glass-panel border-core-border flex flex-col space-y-4 rounded-xl border p-5">
-                            <div class="flex items-center justify-between">
-                                <h3 class="font-mono text-sm font-bold uppercase tracking-wider text-white">Response Payload</h3>
-                                <div class="flex items-center space-x-2 font-mono text-xs" x-show="playgroundResponse">
-                                    <span class="text-emerald-400">200 OK</span>
-                                    <span class="text-slate-500">•</span>
-                                    <span class="text-slate-400">142ms</span>
-                                </div>
-                            </div>
-
-                            <div class="border-core-border max-h-72 flex-1 overflow-y-auto rounded-lg border bg-slate-950 p-4 font-mono text-xs text-slate-300">
-                                <template x-if="playgroundLoading">
-                                    <div class="text-core-cyan flex items-center justify-center space-x-3 py-16">
-                                        <svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                                        </svg>
-                                        <span>Communicating with Core-X gateway...</span>
-                                    </div>
-                                </template>
-                                <template x-if="!playgroundLoading && playgroundResponse">
-                                    <pre class="text-core-cyan" x-text="JSON.stringify(playgroundResponse, null, 2)"></pre>
-                                </template>
-                                <template x-if="!playgroundLoading && !playgroundResponse">
-                                    <div class="py-16 text-center text-slate-600">
-                                        Click "Send API Request" to test endpoint execution.
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Feedback Control Widget -->
-                    <div class="glass-panel border-core-border mt-8 flex flex-col items-center justify-between gap-4 rounded-xl border p-6 sm:flex-row">
+                <section id="devices" class="mt-12">
+                    <div class="mb-6 flex items-end justify-between gap-4">
                         <div>
-                            <h4 class="mb-1 text-sm font-bold text-white">Was this documentation helpful?</h4>
-                            <p class="text-xs text-slate-400">Help us improve the Core-X developer portal experience.</p>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <button class="border-core-border hover:border-core-cyan flex items-center space-x-2 rounded-lg border bg-slate-900 px-4 py-2 text-xs text-slate-300 transition-colors" @click="submitFeedback('positive')">
-                                <svg class="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
-                                </svg>
-                                <span>Yes, extremely</span>
-                            </button>
-                            <button class="border-core-border flex items-center space-x-2 rounded-lg border bg-slate-900 px-4 py-2 text-xs text-slate-300 transition-colors hover:border-rose-500/50" @click="submitFeedback('negative')">
-                                <svg class="h-4 w-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018c.163 0 .326.02.485.06L17 4m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"></path>
-                                </svg>
-                                <span>Needs improvement</span>
-                            </button>
+                            <div class="text-xs uppercase tracking-[0.22em] text-cyan-300">Device flows</div>
+                            <h2 class="mt-2 text-3xl font-bold text-white">Terminal and device lifecycle</h2>
                         </div>
                     </div>
-                </div>
 
-                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'database'">
-                    <div class="border-core-border border-b pb-6">
-                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Storage</span>
-                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Secure IndexedDB Storage</h1>
-                        <p class="text-sm text-slate-400">Core-X includes a secure browser-side database layer for persisting small, non-sensitive application state such as preferences, local session snapshots, and ephemeral runtime data.</p>
-                    </div>
-
-                    <div class="space-y-6 text-sm text-slate-300">
-                        <div class="glass-panel border-core-border rounded-xl border p-5">
-                            <h3 class="mb-3 text-lg font-bold text-white">Overview</h3>
-                            <p class="text-xs leading-relaxed text-slate-400">The secure database layer is built on IndexedDB and exposes a guarded API that only permits keys defined in the allowlist. This prevents arbitrary storage access and keeps the runtime predictable across applets and sessions.</p>
+                    <div class="grid gap-6 lg:grid-cols-3">
+                        <div class="glass rounded-2xl p-5">
+                            <div class="mb-3 text-xs uppercase tracking-[0.2em] text-cyan-300">register</div>
+                            <div class="font-mono text-sm text-slate-200">POST /api/v1/auth/register-device</div>
+                            <p class="mt-3 text-sm leading-6 text-slate-300">
+                                Sends a pairing request for a known device key and moves it into the pairing state when it is inactive.
+                            </p>
                         </div>
 
-                        <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
-                            <div class="border-core-border flex items-center justify-between border-b bg-slate-950 px-4 py-3">
-                                <div class="flex items-center space-x-2">
-                                    <span class="h-3 w-3 rounded-full bg-rose-500/80"></span>
-                                    <span class="h-3 w-3 rounded-full bg-amber-500/80"></span>
-                                    <span class="h-3 w-3 rounded-full bg-emerald-500/80"></span>
-                                    <span class="ml-2 font-mono text-xs text-slate-400">secure-store.js</span>
-                                </div>
+                        <div class="glass rounded-2xl p-5">
+                            <div class="mb-3 text-xs uppercase tracking-[0.2em] text-cyan-300">activate</div>
+                            <div class="font-mono text-sm text-slate-200">POST /api/v1/auth/device-activation</div>
+                            <p class="mt-3 text-sm leading-6 text-slate-300">
+                                Verifies the terminal token and returns staff, client, store, and branch metadata for activation.
+                            </p>
+                        </div>
+
+                        <div class="glass rounded-2xl p-5">
+                            <div class="mb-3 text-xs uppercase tracking-[0.2em] text-cyan-300">client devices</div>
+                            <div class="font-mono text-sm text-slate-200">POST /api/v1/client/store/{uuid}/devices/create</div>
+                            <p class="mt-3 text-sm leading-6 text-slate-300">
+                                Creates or reuses a device record for the client and returns the generated device key and status.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="products" class="mt-12 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+                    <div class="glass rounded-2xl p-6">
+                        <div class="mb-4 flex items-center gap-3">
+                            <span class="rounded border border-violet-500/40 bg-violet-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-violet-300">GET/POST</span>
+                            <span class="font-mono text-sm text-slate-300">Products & catalog</span>
+                        </div>
+
+                        <h2 class="text-2xl font-bold text-white">Products, staff and stores</h2>
+                        <p class="mt-3 text-slate-300">
+                            Customer-facing ALmax workflows are centered around the authenticated client, including their product catalog, staff records, stores, and branches.
+                        </p>
+
+                        <ul class="mt-5 space-y-3 text-sm text-slate-300">
+                            <li class="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">POST /api/v1/products/get/all</li>
+                            <li class="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">POST /api/v1/products/save/{uuid}</li>
+                            <li class="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">POST /api/v1/client/staffs/{uuid}/all</li>
+                            <li class="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">GET /api/v1/resolve/{model}/{uuid}</li>
+                        </ul>
+                    </div>
+
+                    <div class="glass rounded-2xl p-6">
+                        <h3 class="text-lg font-semibold text-white">App bootstrap</h3>
+                        <p class="mt-3 text-sm leading-6 text-slate-300">
+                            App namespaces and developer registration are exposed via X-app endpoints, allowing the engine to validate app ownership and return application metadata.
+                        </p>
+
+                        <div class="mt-5 rounded-lg border border-slate-800 bg-slate-950/80 p-4 font-mono text-sm text-cyan-200">
+                            POST /api/v1/app/boot/{xnamespace}<br>
+                            POST /api/v1/apps/data/{xnamespace}<br>
+                            POST /api/v1/engine/resolve
+                        </div>
+                    </div>
+                </section>
+
+                <section id="sales" class="mt-12">
+                    <div class="glass rounded-2xl p-6">
+                        <div class="mb-4 flex items-center gap-3">
+                            <span class="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-amber-300">Sales</span>
+                            <span class="font-mono text-sm text-slate-300">Order creation + client sales</span>
+                        </div>
+
+                        <h2 class="text-2xl font-bold text-white">Sales and operations workflows</h2>
+                        <p class="mt-3 max-w-3xl text-slate-300">
+                            The API supports product-driven sales workflows, storefront operations, and client-defined data retrieval for staff, branches, and stores. This page reflects the actual backend contract used by the project today.
+                        </p>
+
+                        <div class="mt-6 grid gap-4 md:grid-cols-3">
+                            <div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+                                <div class="text-xs uppercase tracking-[0.2em] text-slate-400">sales</div>
+                                <div class="mt-2 font-mono text-sm text-cyan-200">POST /api/v1/new-sale</div>
                             </div>
-                            <div class="bg-black/90 p-4 font-mono text-xs text-slate-300">
-                                <pre class="overflow-x-auto">
-                                    <span class="text-purple-400">import</span> XEngine <span class="text-purple-400">from</span> <span class="text-emerald-300">"@almaxcloud/core-x"</span>;
-
-<span class="text-purple-400">window</span>.xengine = XEngine();
-
-<span class="text-purple-400">const</span> theme = <span class="text-purple-400">await</span> xengine.db_get(<span class="text-emerald-300">"theme"</span>);
-
-<span class="text-purple-400">await</span> xengine.db_set(<span class="text-emerald-300">"theme"</span>, <span class="text-emerald-300">"dark"</span>, <span class="text-emerald-300">"string"</span>);
-<span class="text-purple-400">await</span> xengine.db_set(<span class="text-emerald-300">"balance"</span>, <span class="text-orange-400">2500</span>, <span class="text-emerald-300">"number"</span>);
-<span class="text-purple-400">await</span> xengine.db_set(<span class="text-emerald-300">"is_active"</span>, <span class="text-purple-400">true</span>, <span class="text-emerald-300">"bool"</span>);
-<span class="text-purple-400">await</span> xengine.db_set(<span class="text-emerald-300">"cart_items"</span>, [<span class="text-emerald-300">"sku-101"</span>, <span class="text-emerald-300">"sku-202"</span>], <span class="text-emerald-300">"array"</span>);
-
-<span class="text-purple-400">const</span> saved = <span class="text-purple-400">await</span> xengine.db_get(<span class="text-emerald-300">"cart_items"</span>);
-<span class="text-purple-400">await</span> xengine.db_delete(<span class="text-emerald-300">"session_token"</span>);
-
-<span class="text-slate-500">// Supported formats: ["string", "number", "bool", "array"]</span></pre>
+                            <div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+                                <div class="text-xs uppercase tracking-[0.2em] text-slate-400">store data</div>
+                                <div class="mt-2 font-mono text-sm text-cyan-200">POST /api/v1/client/store/sales/{uuid}/all</div>
+                            </div>
+                            <div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+                                <div class="text-xs uppercase tracking-[0.2em] text-slate-400">resolve</div>
+                                <div class="mt-2 font-mono text-sm text-cyan-200">GET /api/v1/resolve/{model}/{uuid}</div>
                             </div>
                         </div>
-
-                        <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
-                            <table class="w-full text-left text-xs">
-                                <thead class="border-core-border border-b bg-slate-950 font-mono text-slate-400">
-                                    <tr>
-                                        <th class="p-3">Method</th>
-                                        <th class="p-3">Purpose</th>
-                                        <th class="p-3">Notes</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-core-border divide-y text-slate-300">
-                                    <tr>
-                                        <td class="text-core-cyan p-3 font-mono">xengine.db_get(key)</td>
-                                        <td class="p-3">Read a stored value by key from the secure IndexedDB store.</td>
-                                        <td class="p-3 text-slate-400">Use only allowed keys from your local app schema; unsupported keys return nothing.</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-core-cyan p-3 font-mono">xengine.db_set(key, value, format)</td>
-                                        <td class="p-3">Persist a value in the secure local database.</td>
-                                        <td class="p-3 text-slate-400">Supported formats: <span class="font-mono text-slate-200">"string"</span>, <span class="font-mono text-slate-200">"number"</span>, <span class="font-mono text-slate-200">"bool"</span>, <span class="font-mono text-slate-200">"array"</span>.</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-core-cyan p-3 font-mono">xengine.db_delete(key)</td>
-                                        <td class="p-3">Delete a value from the local store.</td>
-                                        <td class="p-3 text-slate-400">This is the safe way to clear a stored key when a session or workflow ends.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="glass-panel border-core-border rounded-xl border p-5">
-                            <h3 class="mb-3 text-lg font-bold text-white">Usage notes</h3>
-                            <ul class="space-y-2 text-xs leading-relaxed text-slate-400">
-                                <li>• Instantiate the client once: <span class="font-mono text-slate-200">window.xengine = XEngine();</span></li>
-                                <li>• Use the instance methods directly: <span class="font-mono text-slate-200">await xengine.db_get(key)</span></li>
-                                <li>• Keep storage keys explicit and minimal to avoid accidental cross-app leakage.</li>
-                                <li>• Store only session state, UI preferences, or lightweight metadata — not private secrets.</li>
-                            </ul>
-                        </div>
                     </div>
-
-                    <div class="border-core-border flex items-center justify-between border-t pt-6">
-                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('api-playground')">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                            <span>Previous: API Playground</span>
-                        </button>
-                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('webhooks')">
-                            <span>Next: Webhooks & Events</span>
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'webhooks'">
-                    <div class="border-core-border border-b pb-6">
-                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Real-Time</span>
-                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Webhooks & Event Subscriptions</h1>
-                        <p class="text-sm text-slate-400">Listen to real-time kernel events, applet state transitions, and user telemetry via secured HTTPS webhooks.</p>
-                    </div>
-
-                    <div class="space-y-4 text-sm text-slate-300">
-                        <h3 class="text-lg font-bold text-white">Event Payload Structure</h3>
-                        <p class="text-xs text-slate-400">All outbound webhook deliveries are signed using HMAC-SHA256 in the <code class="text-core-cyan font-mono">X-CoreX-Signature</code> header.</p>
-
-                        <div class="border-core-border rounded-lg border bg-black/90 p-4 font-mono text-xs text-slate-300">
-                            {<br>
-                            &nbsp;&nbsp;<span class="text-purple-400">"event_id"</span>: <span class="text-emerald-300">"evt_99812739102"</span>,<br>
-                            &nbsp;&nbsp;<span class="text-purple-400">"event_type"</span>: <span class="text-emerald-300">"applet.spawned"</span>,<br>
-                            &nbsp;&nbsp;<span class="text-purple-400">"timestamp"</span>: <span class="text-orange-400">1760601513</span>,<br>
-                            &nbsp;&nbsp;<span class="text-purple-400">"data"</span>: {<br>
-                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">"window_id"</span>: <span class="text-emerald-300">"win_x_8871"</span>,<br>
-                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">"owner"</span>: <span class="text-emerald-300">"usr_almax_admin"</span><br>
-                            &nbsp;&nbsp;}<br>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="border-core-border flex items-center justify-between border-t pt-6">
-                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('api-playground')">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                            <span>Previous: API Playground</span>
-                        </button>
-                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('errors')">
-                            <span>Next: Error Codes & Limits</span>
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="animate-fadeIn space-y-8" style="display: none;" x-show="activeDocId === 'errors'">
-                    <div class="border-core-border border-b pb-6">
-                        <span class="text-core-cyan font-mono text-xs uppercase tracking-wider">Troubleshooting</span>
-                        <h1 class="mb-3 mt-1 text-3xl font-extrabold text-white">Error Codes & Rate Limits</h1>
-                        <p class="text-sm text-slate-400">Understand Core-X API status codes, rate limit headers, and troubleshooting protocols.</p>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div class="glass-panel border-core-border overflow-hidden rounded-xl border">
-                            <table class="w-full text-left text-xs">
-                                <thead class="border-core-border border-b bg-slate-950 font-mono text-slate-400">
-                                    <tr>
-                                        <th class="p-3">Status Code</th>
-                                        <th class="p-3">Error Slug</th>
-                                        <th class="p-3">Description & Resolution</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-core-border divide-y text-slate-300">
-                                    <tr>
-                                        <td class="p-3 font-mono text-amber-400">429 Too Many Requests</td>
-                                        <td class="p-3 font-mono text-slate-300">rate_limit_exceeded</td>
-                                        <td class="p-3 text-slate-400">Exceeded 1,000 req/min threshold. Implement exponential backoff.</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-3 font-mono text-rose-400">401 Unauthorized</td>
-                                        <td class="p-3 font-mono text-slate-300">invalid_token</td>
-                                        <td class="p-3 text-slate-400">Provided PAT or JWT has expired or been revoked in dashboard.</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-3 font-mono text-rose-400">503 Service Unavailable</td>
-                                        <td class="p-3 font-mono text-slate-300">kernel_restart</td>
-                                        <td class="p-3 text-slate-400">Target Core-X daemon container is undergoing rolling cluster update.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="border-core-border flex items-center justify-between border-t pt-6">
-                        <button class="flex items-center space-x-1 text-xs text-slate-400 hover:text-white" @click="navigateTo('webhooks')">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                            <span>Previous: Webhooks</span>
-                        </button>
-                        <button class="text-core-cyan flex items-center space-x-1 text-xs font-semibold hover:underline" @click="navigateTo('overview')">
-                            <span>Back to Overview</span>
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
+                </section>
             </main>
         </div>
-
-        @livewireScripts
-        <script>
-            function coreDocsApp() {
-                return {
-                    activeDocId: 'overview',
-                    searchOpen: false,
-                    searchQuery: '',
-                    mobileSidebarOpen: false,
-                    selectedLanguage: 'javascript',
-                    toastMessage: '',
-                    toastVisible: false,
-
-                    // Playground State
-                    playgroundMethod: 'POST',
-                    playgroundUrl: 'https://testnet.almaxcloud.com/api/v1/',
-                    playgroundParams: '{\n  "namespace": "com.almaxcloud.test",\n  "width": 1280,\n  "height": 800,\n  "public_key": "1234xyx..."\n}',
-                    playgroundResponse: null,
-                    playgroundLoading: false,
-
-                    categories: [{
-                            name: 'Getting Started',
-                            items: [{
-                                    id: 'overview',
-                                    title: 'Overview',
-                                    badge: 'v1.0'
-                                },
-                                {
-                                    id: 'quickstart',
-                                    title: 'Quickstart Guide'
-                                },
-                                {
-                                    id: 'auth',
-                                    title: 'Authentication & Security'
-                                }
-                            ]
-                        },
-                        {
-                            name: 'Core-X APIs',
-                            items: [{
-                                    id: 'windows-api',
-                                    title: 'Web OS & Applets API',
-                                    badge: 'POST'
-                                },
-                                {
-                                    id: 'api-playground',
-                                    title: 'Interactive API Playground',
-                                    badge: 'Sandbox'
-                                }
-                            ]
-                        },
-                        {
-                            name: 'Database',
-                            items: [{
-                                id: 'database',
-                                title: 'Secure IndexedDB'
-                            }]
-                        },
-                        {
-                            name: 'Helpers',
-                            items: [{
-                                id: 'window-context_menu',
-                                title: 'Context Menu'
-                            }]
-                        },
-                        {
-                            name: 'Real-Time & Ops',
-                            items: [{
-                                    id: 'webhooks',
-                                    title: 'Webhooks & Events'
-                                },
-                                {
-                                    id: 'errors',
-                                    title: 'Error Codes & Limits'
-                                }
-                            ]
-                        }
-                    ],
-
-                    booting: false,
-                    bootDone: true,
-                    is_loading: true,
-                    loading_progress: 0,
-                    currentBootText: "",
-                    bootSequence: [
-                        "",
-                        "",
-                        "ESTABLISHING SECURE CONNECTION...",
-                        "",
-                        "Booting...",
-                        "",
-                        "Starting Services",
-                        "",
-                        "SYSTEM ONLINE.",
-                        "",
-                    ],
-
-                    get currentDocTitle() {
-                        for (const cat of this.categories) {
-                            for (const item of cat.items) {
-                                if (item.id === this.activeDocId) return item.title;
-                            }
-                        }
-                        return 'Overview';
-                    },
-
-                    get currentCategoryName() {
-                        for (const cat of this.categories) {
-                            for (const item of cat.items) {
-                                if (item.id === this.activeDocId) return cat.name;
-                            }
-                        }
-                        return 'Getting Started';
-                    },
-
-                    get filteredSearchResults() {
-                        if (!this.searchQuery.trim()) {
-                            return [{
-                                    id: 'overview',
-                                    category: 'Getting Started',
-                                    title: 'Core-X Developer Overview',
-                                    excerpt: 'Official developer portal for Core-X Web OS by ALmax Cloud.'
-                                },
-                                {
-                                    id: 'quickstart',
-                                    category: 'Getting Started',
-                                    title: 'Quickstart Guide',
-                                    excerpt: 'Initialize your first Core-X Web OS container and authenticate.'
-                                },
-                                {
-                                    id: 'windows-api',
-                                    category: 'Core-X APIs',
-                                    title: 'Create Window Applet',
-                                    excerpt: 'Control desktop hierarchy, tiling layouts, and virtual viewports.'
-                                },
-                                {
-                                    id: 'api-playground',
-                                    category: 'Sandbox',
-                                    title: 'Interactive API Playground',
-                                    excerpt: 'Test Core-X OS endpoints in real-time with simulated responses.'
-                                }
-                            ];
-                        }
-                        const q = this.searchQuery.toLowerCase();
-                        const allDocs = [{
-                                id: 'overview',
-                                category: 'Getting Started',
-                                title: 'Core-X Developer Overview',
-                                excerpt: 'Official developer portal for Core-X Web OS by ALmax Cloud.'
-                            },
-                            {
-                                id: 'quickstart',
-                                category: 'Getting Started',
-                                title: 'Quickstart Guide',
-                                excerpt: 'Initialize your first Core-X Web OS container and authenticate.'
-                            },
-                            {
-                                id: 'auth',
-                                category: 'Security',
-                                title: 'Authentication & X-Engine',
-                                excerpt: 'Cryptographic verification and token-based authentication for daemon requests.'
-                            },
-                            {
-                                id: 'web-api',
-                                category: 'Core-X APIs',
-                                title: 'Create Window Applet',
-                                excerpt: 'Control desktop hierarchy, tiling layouts, and virtual viewports.'
-                            },
-                            {
-                                id: 'api-playground',
-                                category: 'Sandbox',
-                                title: 'Interactive API Playground',
-                                excerpt: 'Test Core-X OS endpoints in real-time with simulated responses.'
-                            },
-                            {
-                                id: 'database',
-                                category: 'Database',
-                                title: 'Secure IndexedDB Storage',
-                                excerpt: 'Persist and retrieve guarded browser-side data with secure IndexedDB helpers.'
-                            },
-                            {
-                                id: 'webhooks',
-                                category: 'Real-Time',
-                                title: 'Webhooks & Event Subscriptions',
-                                excerpt: 'Listen to real-time kernel events and applet state transitions.'
-                            },
-                            {
-                                id: 'errors',
-                                category: 'Troubleshooting',
-                                title: 'Error Codes & Rate Limits',
-                                excerpt: 'Understand Core-X API status codes and rate limit headers.'
-                            }
-                        ];
-                        return allDocs.filter(d => d.title.toLowerCase().includes(q) || d.excerpt.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
-                    },
-                    async init() {
-                        // Run Boot Sequence Logic
-                        for (let i = 0; i < this.bootSequence.length; i++) {
-                            this.currentBootText = this.bootSequence[i];
-                            this.loading_progress = ((i + 1) / this.bootSequence.length) * 100;
-
-                            // Random delay between lines for realism (300ms - 800ms)
-                            const delay = Math.floor(Math.random() * 500) + 300;
-                            await new Promise((r) => setTimeout(r, delay));
-
-                        }
-                        // Final dramatic pause before revealing the app
-                        await new Promise((r) => setTimeout(r, 600));
-                        this.is_loading = false;
-                        let nav = localStorage.getItem("currentScreen");
-                        console.log(this.activeDocId);
-                        if (typeof nav != undefined && nav != "null" && nav && nav != null) {
-                            this.navigateTo(nav);
-                        } else {
-                            this.navigateTo('overview');
-                        }
-                        this.activeDocId = this.activeDocId != null ? this.activeDocId : 'overview';
-
-                    },
-
-                    navigateTo(id) {
-                        this.activeDocId = id;
-                        localStorage.setItem("currentScreen", id);
-                        window.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                        });
-                    },
-
-                    showToast(msg) {
-                        this.toastMessage = msg;
-                        this.toastVisible = true;
-                        setTimeout(() => {
-                            this.toastVisible = false;
-                        }, 3000);
-                    },
-
-                    copyText(text) {
-                        const el = document.createElement('textarea');
-                        el.value = text;
-                        document.body.appendChild(el);
-                        el.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(el);
-                        this.showToast('Copied to clipboard successfully!');
-                    },
-
-                    copySnippet() {
-                        let code = "";
-                        if (this.selectedLanguage === 'javascript') {
-                            code = "import XEngine, { Helpers, Payments } from '@almaxcloud/core-x';\n\nwindow.xengine = XEngine();\n\nif (typeof window !== 'undefined' && typeof window.xengine !== 'undefined') {\n  let boot = await xengine.new_app(\n    'com.almaxcloud.corex',\n    'public_api_token_please_keep_in_env'\n  );\n}\n\nexport function MyApplication() {\n  return {\n    ...Helpers(),\n    ...Payments(),\n  };\n}";
-                        } else {
-                            code = "curl -X POST https://api.almaxcloud.com/api/v1/app/boot -H 'Authorization: Bearer App Public key'";
-                        }
-                        this.copyText(code);
-                    },
-
-                    sendPlaygroundRequest() {
-                        this.playgroundLoading = true;
-                        this.playgroundResponse = null;
-                        setTimeout(() => {
-                            this.playgroundLoading = false;
-                            this.playgroundResponse = {
-                                status: "success",
-                                code: 200,
-                                timestamp: Date.now(),
-                                region: "us-east-almax",
-                                data: {
-                                    window_id: "win_cx_" + Math.floor(Math.random() * 90000 + 10000),
-                                    status: "active",
-                                    title: "Enterprise Dashboard v2",
-                                    viewport: {
-                                        width: 1280,
-                                        height: 800
-                                    },
-                                    pid: 4892
-                                }
-                            };
-                            this.showToast('API daemon response received (200 OK)');
-                        }, 650);
-                    },
-
-                    submitFeedback(rating) {
-                        this.showToast(rating === 'positive' ? 'Thank you! Your feedback has been recorded.' : 'Thank you! Feedback sent to the ALmax docs team.');
-                    }
-                }
-            }
-        </script>
     </body>
-
 </html>
