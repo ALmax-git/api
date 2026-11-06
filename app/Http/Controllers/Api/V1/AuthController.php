@@ -718,55 +718,55 @@ class AuthController extends Controller
                 'message'                           => 'No products found for the associated client.',
             ], 404);
         }
-        if (can_access('products')) {
-            return response()->json([
-                'success' => true,
-                'data' => $client->products->map(
-                    fn($p) => [
-                        'id'                        => $p->id,
-                        'uuid'                      => '#' . make_uuid($p->id, 'product'),
-                        'name'                      => $p->name,
-                        'brand'                     => $p->brand,
-                        'sub_title'                 => $p->sub_title,
-                        'sold'                      => $p->sold,
-                        'image_url'                 => $p->images->first()?->storage_path,
-                        'emoji'                     => $p->emoji ?: '📦',
-                        'color'                     => $p->color ?: '#6B7280',
-                        'sale_price'                => $p->sale_price,
-                        'available_stock'           => $p->is_non_stock_item ? 9999 : $p->available_stock,
-                        'category'                  => $p->category?->title,
-                        'discount'                  => $p->discount,
-                        'margin'                    => $p->margin,
+        // if (can_access('products')) {
+        return response()->json([
+            'success' => true,
+            'data' => $client->products->map(
+                fn($p) => [
+                    'id'                        => $p->id,
+                    'uuid'                      => '#' . make_uuid($p->id, 'product'),
+                    'name'                      => $p->name,
+                    'brand'                     => $p->brand,
+                    'sub_title'                 => $p->sub_title,
+                    'sold'                      => $p->sold,
+                    'image_url'                 => $p->images->first()?->storage_path,
+                    'emoji'                     => $p->emoji ?: '📦',
+                    'color'                     => $p->color ?: '#6B7280',
+                    'sale_price'                => $p->sale_price,
+                    'available_stock'           => $p->is_non_stock_item ? 9999 : $p->available_stock,
+                    'category'                  => $p->category?->title,
+                    'discount'                  => $p->discount,
+                    'margin'                    => $p->margin,
 
-                        // IMPORTANT
-                        'labels' => $p->labels
-                            ->map(
-                                fn($label) => [
-                                    'id'            => $label->id,
-                                    'status'        => $label->status,
-                                    'uuid'          => '#' . make_uuid($label->id, 'label'),
-                                ],
-                            )
-                            ->values(),
-                        'sale_units' => $p->sale_units
-                            ->map(
-                                fn($sale_unit) => [
-                                    'quantity'      => $sale_unit->quantity,
-                                    'label'         => $sale_unit->label,
-                                    'price'         => $sale_unit->price,
-                                    'code'          => $sale_unit->code,
-                                ]
-                            )
-                            ->values()
-                    ],
-                ),
-            ], 200);
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'You do not have permission to access products.',
-            ], 403);
-        }
+                    // IMPORTANT
+                    'labels' => $p->labels
+                        ->map(
+                            fn($label) => [
+                                'id'            => $label->id,
+                                'status'        => $label->status,
+                                'uuid'          => '#' . make_uuid($label->id, 'label'),
+                            ],
+                        )
+                        ->values(),
+                    'sale_units' => $p->sale_units
+                        ->map(
+                            fn($sale_unit) => [
+                                'quantity'      => $sale_unit->quantity,
+                                'label'         => $sale_unit->label,
+                                'price'         => $sale_unit->price,
+                                'code'          => $sale_unit->code,
+                            ]
+                        )
+                        ->values()
+                ],
+            ),
+        ], 200);
+        // } else {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'You do not have permission to access products.',
+        //     ], 403);
+        // }
     }
 
     /**
