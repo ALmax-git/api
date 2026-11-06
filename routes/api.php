@@ -25,6 +25,7 @@ Route::prefix('v1/')->group(function () {
         Route::POST('auth/register-device', [AuthController::class, 'register_device']);
         Route::POST('device/email/activate/{device_key}', [AuthController::class, 'email_device_activation']);
         Route::POST('auth/device-activation', [AuthController::class, 'device_activation']);
+        Route::post('client/store/{uuid}/devices/safecode', [BotNetController::class, 'store_find_bot']);
     });
 
     // Protected routes requiring a valid Sanctum Bearer token
@@ -42,7 +43,6 @@ Route::prefix('v1/')->group(function () {
         Route::post('client/store/sales/{uuid}/all', [SalesController::class, 'store_sales']);
         Route::post('client/staffs/{uuid}/all', [AccountsController::class, 'store_staffs']);
 
-        Route::post('client/store/{uuid}/devices/safecode', [BotNetController::class, 'store_find_bot']);
         Route::post('client/store/{uuid}/devices/create', [BotNetController::class, 'create_device']);
         Route::post('client/store/{uuid}/devices/all', [BotNetController::class, 'store_devices']);
 

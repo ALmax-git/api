@@ -410,29 +410,35 @@ class AuthController extends Controller
                 <p></p>
                 <p>https://api.almaxcloud.com/api/v1/device/email/activate/{$bot->device_key}</p>
             HTML;
-        $inactiveStatus = BotStatus::INACTIVE->value ?? 'inactive';
-        if ($bot->status == $inactiveStatus || $bot->status == 'inactive') {
-            $bot->status = BotStatus::PAIRING->value;
-            $bot->save();
-
-            email(
-                $bot->client->email,
-                $content,
-                'New Device Pairing Request',
-
-            );
-            return response()->json([
-                'success' => true,
-                'status' => $bot->status,
-                'key' => write($bot->device_key),
-            ], 200);
-        }
         email(
             $bot->client->email,
             $content,
             'New Device Pairing Request',
 
         );
+        $inactiveStatus = BotStatus::INACTIVE->value ?? 'inactive';
+        if ($bot->status == $inactiveStatus || $bot->status == 'inactive') {
+            $bot->status = BotStatus::PAIRING->value;
+            $bot->save();
+
+            // email(
+            //     $bot->client->email,
+            //     $content,
+            //     'New Device Pairing Request',
+
+            // );
+            return response()->json([
+                'success' => true,
+                'status' => $bot->status,
+                'key' => write($bot->device_key),
+            ], 200);
+        }
+        // email(
+        //     $bot->client->email,
+        //     $content,
+        //     'New Device Pairing Request',
+
+        // );
 
         return response()->json([
             'success' => false,
