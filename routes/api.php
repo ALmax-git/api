@@ -7,11 +7,12 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\BotNetController;
 use App\Http\Controllers\FileSystemController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RealtorController;
 use App\Http\Controllers\ResolveController;
 use App\Http\Controllers\SalesController;
 use App\Http\Middleware\EnsureTokenIsValid;
 use App\Models\User;
-
+use Livewire\Attributes\Reactive;
 
 Route::prefix('v1/')->group(function () {
 
@@ -58,6 +59,8 @@ Route::prefix('v1/')->group(function () {
         Route::POST('new-sale', [SalesController::class, 'sale_new'])->name('sale_new');
         Route::get('sales/{token}', [SalesController::class, 'sales'])->name('account.sales');
 
+
+        Route::post('realtor/client/save', [RealtorController::class, 'save_client'])->name('realtor.client.save');
         Route::get('realtor/rsa/{user}', function ($user) {
             $user = User::find(get_id(urldecode($user), 'user'));
             if ($user) {

@@ -136,6 +136,7 @@ class AuthController extends Controller
         $client = get_client_namespace($xapp->name);
         if (!$client || !$xapp) {
 
+            Log::info('eee', [$client, $xapp]);
             return response()->json([
                 'success' => false,
                 'message' => 'Client not found Invalid namespace.',
