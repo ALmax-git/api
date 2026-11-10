@@ -48,7 +48,7 @@ class RealtorController extends Controller
 
         try {
             DB::beginTransaction();
- 
+
             $user = User::where('nin', $request->input('nin'))->orWhere('bvn', $request->input('bvn'))->first();
 
             if (!$user) {
