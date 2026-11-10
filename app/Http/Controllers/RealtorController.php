@@ -22,23 +22,23 @@ class RealtorController extends Controller
     public function save_client(Request $request)
     {
 
-        $user = $request->user();
+        // $user = $request->user();
 
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not authenticated...',
-            ], 401);
-        }
-        $client = Client::find($user->client_id);
-        if (!$client) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Client not found.',
-            ], 404);
-        }
+        // if (!$user) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'User not authenticated...',
+        //     ], 401);
+        // }
+        // $client = Client::find($user->client_id);
+        // if (!$client) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Client not found.',
+        //     ], 404);
+        // }
 
-        Log::info('Saving client for user: ' . $user->id . ', client: ' . $client->id, ['request_data' => $request->all()]);
+        // Log::info('Saving client for user: ' . $user->id . ', client: ' . $client->id, ['request_data' => $request->all()]);
 
         try {
             DB::beginTransaction();
