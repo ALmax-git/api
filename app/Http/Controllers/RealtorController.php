@@ -27,7 +27,7 @@ class RealtorController extends Controller
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'User not authenticated.',
+                'message' => 'User not authenticated...',
             ], 401);
         }
         $client = Client::find($user->client_id);
@@ -36,12 +36,6 @@ class RealtorController extends Controller
                 'success' => false,
                 'message' => 'Client not found.',
             ], 404);
-        }
-        if ($client->id != $user->client_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not authorized.',
-            ], 403);
         }
 
         Log::info('Saving client for user: ' . $user->id . ', client: ' . $client->id, ['request_data' => $request->all()]);
