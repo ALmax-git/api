@@ -23,7 +23,6 @@ class RealtorController extends Controller
     {
 
         $user = $request->user();
-        Log::info('test', [$request->user()]);
 
         if (!$user) {
             return response()->json([
