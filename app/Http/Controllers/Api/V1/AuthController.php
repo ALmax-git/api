@@ -570,7 +570,7 @@ class AuthController extends Controller
             ], 200);
         } catch (Exception $e) {
             logger()->error('Validation failed during login', [
-                'errors' => [$e],
+                'errors' => $e->errors() ?? [],
                 'message' => $e->getMessage(),
                 'payload' => $request->all(),
             ]);
