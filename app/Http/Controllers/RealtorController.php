@@ -50,9 +50,6 @@ class RealtorController extends Controller
                 $user = new User();
             }
 
-            $user->name = $request->input('name');
-            $user->username = $request->input('username');
-            $user->email = $request->input('email');
             if (!$user->password) {
                 $user->password = bcrypt(random_bytes(16)); // Generate a random password if not set
             }
@@ -64,6 +61,9 @@ class RealtorController extends Controller
                 ], 404);
             }
             $user->first_name = $request->input('first_name');
+            $user->name = $request->input('name');
+            $user->username = $request->input('username');
+            $user->email = $request->input('email') ?? $request->email;
             $user->surname = $request->input('surname');
             $user->last_name = $request->input('last_name');
             $user->phone_number = $request->input('phone_number');
