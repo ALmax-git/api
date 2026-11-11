@@ -473,6 +473,20 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
+        try {
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|string|min:6',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            logger()->error('Validation failed during login', [
+                'errors' => $e->errors(),
+                'payload' => $request->all(),
+            ]);
+            throw ValidationException::withMessages([
+                'email' => ['Invalid credentials provided for Core-X authentication.'],
+            ]);
+        }
         $passwordHash = $user?->password ?? $user?->pin ?? null;
         $isValidPassword = $user
             && (
