@@ -20,7 +20,7 @@ Route::prefix('v1/')->group(function () {
     // Public routes (throttled against brute force)
     Route::middleware('throttle:10,1')->group(function () {
         Route::post('app/boot/{xnamespace}', [AuthController::class, 'boot_xapp']);
-        Route::post('auth/login', [AuthController::class, 'login'])->withoutMiddleware(EnsureTokenIsValid::class);
+        Route::post('auth/login', [AuthController::class, 'login']);
         Route::post('auth/register', [AuthController::class, 'register'])->withoutMiddleware(EnsureTokenIsValid::class);
         Route::post('engine/resolve', [AuthController::class, 'resolve']);
         Route::POST('auth/register-device', [AuthController::class, 'register_device']);

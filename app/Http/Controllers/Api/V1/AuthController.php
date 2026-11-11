@@ -452,7 +452,13 @@ class AuthController extends Controller
      */
     public function login(Request $request): JsonResponse
     {
-
+        logger()->info('Core-X Login Diagnostic', [
+            'xsource' => $request->header('Xsource'),
+            'email_present' => $request->filled('email'),
+            'password_present' => $request->filled('password'),
+            'content_type' => $request->header('Content-Type'),
+            'payload_keys' => array_keys($request->all()),
+        ]);
         // 1. Validate application namespace
         $xnamespace = $request->header('Xsource');
         $xapp = XApp::where('name', $xnamespace)->first();
@@ -471,7 +477,7 @@ class AuthController extends Controller
         $isValidPassword = $user
             && (
                 ($passwordHash && Hash::check($request->password, $passwordHash))
-                || ($user->pin && $user->pin === $request->password)
+                // || ($user->pin && $user->pin === $request->password)
             );
 
         if (! $user || ! $isValidPassword) {
