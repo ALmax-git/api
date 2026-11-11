@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Models\XApp;
 use App\Models\XAppAuth;
 use App\Models\XDeveloper;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -452,137 +453,131 @@ class AuthController extends Controller
      */
     public function login(Request $request): JsonResponse
     {
-        logger()->info('Core-X Login Diagnostic', [
-            'xsource' => $request->header('Xsource'),
-            'email_present' => $request->filled('email'),
-            'password_present' => $request->filled('password'),
-            'content_type' => $request->header('Content-Type'),
-            'payload_keys' => array_keys($request->all()),
-        ]);
-        // 1. Validate application namespace
-        $xnamespace = $request->header('Xsource');
-        $xapp = XApp::where('name', $xnamespace)->first();
-
-        if (!$xapp) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid namespace.',
-                'data' => ['xnamespace' => $xnamespace],
-            ], 419);
-        }
-
-        $user = User::where('email', $request->email)->first();
-
         try {
+            $xnamespace = $request->header('Xsource');
+            $xapp = XApp::where('name', $xnamespace)->first();
+
+            if (!$xapp) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid namespace.',
+                    'data' => ['xnamespace' => $xnamespace],
+                ], 419);
+            }
+
+            $user = User::where('email', $request->email)->first();
+
             $request->validate([
                 'email' => 'required|email',
                 'password' => 'required|string|min:6',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+
+            $passwordHash = $user?->password ?? $user?->pin ?? null;
+            $isValidPassword = $user
+                && (
+                    ($passwordHash && Hash::check($request->password, $passwordHash))
+                    // || ($user->pin && $user->pin === $request->password)
+                );
+
+            if (! $user || ! $isValidPassword) {
+                throw ValidationException::withMessages([
+                    'email' => ['An Invalid credentials provided for Core-X authentication.'],
+                ]);
+            }
+
+            // Default abilities for POS terminals / frontend clients if none provided
+            $abilities = user_access();
+
+            $token = $user->createToken($xapp->tagline ?? $xapp->name, $abilities);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Authentication successful.',
+                'data' => [
+                    'user' => [
+                        'id'                    => make_uuid($user->id, 'user'),
+                        'client_id'             => make_uuid($user->client_id, 'client'),
+                        'name'                  => $user->name,
+                        'username'              => $user->username,
+                        'email'                 => $user->email,
+                        'first_name'            => $user->first_name,
+                        'surname'               => $user->surname,
+                        'last_name'             => $user->last_name,
+                        'phone_number'          => $user->phone_number,
+                        'country'               => $user->country?->name,
+                        'state'                 => $user->state?->name,
+                        'city'                  => $user->city?->name,
+                        'bio'                   => $user->bio,
+                        'profile_photo_url' => $user->profile_photo_url ?? 'https://api.dicebear.com/10.x/planets/svg?seed=happy',
+                        'language'              => $user->language,
+                        'gender'                => $user->gender,
+                        'address'               => $user->address,
+                        'date_of_birth'         => $user->date_of_birth,
+                        'status'                => $user->status,
+                        'preferences'           => $user->preferences,
+                        'timezone'              => $user->timezone,
+                        'trust_score'           => $user->trust_score ?? 0,
+                        'wallet'        => [
+                            'uuid'              => make_uuid($user->wallet?->id, 'wallet'),
+                            'label'             => $user->wallet?->label ?? null,
+                            'icon_url'          => $user->wallet?->icon_url ?? null,
+                            'address'           => $user->wallet?->address ?? null,
+                            'number'            => $user->wallet?->number ?? null,
+                            'locked_balance'    => $user->wallet?->locked_balance ?? 0,
+                            'balance'           => $user->wallet?->balance ?? 0,
+                            'available_balance' => $user->wallet?->available_balance ?? 0,
+                            'created_by'        => $user->wallet?->created_by ?? null,
+                            'provider'          => $user->wallet?->provider ?? 'com.almaxcloud.corex',
+                            'tag'               => $user->wallet?->tag ?? null,
+                            'metadata'          => $user->wallet?->metadata ?? null,
+                            'is_default'        => $user->wallet?->is_default ?? null,
+                            'is_active'         => $user->wallet?->is_active ?? null,
+                            'status'            => $user->wallet?->status ?? null,
+                            'last_balance_sync' => $user->wallet?->last_balance_sync ?? null,
+                            'activated_at'      => $user->wallet?->activated_at ?? null,
+                            'deactivated_at'    => $user->wallet?->deactivated_at ?? null,
+                            'account_number'    => $user->wallet?->account_number ?? null,
+                            'account_name'      => $user->wallet?->account_name ?? null,
+                            'bank_id'           => $user->wallet?->bank_id ?? null,
+                            'bank_name'         => $user->wallet?->bank?->name ?? null,
+                            'assets'            => $user->wallet?->assets->map(
+                                fn($asset) => [
+                                    'balance'           => $asset->balance,
+                                    'address'           => $asset->address,
+                                    'locked_balance'    => $asset->locked_balance,
+                                    'pending_balance'   => $asset->pending_balance,
+                                    'status'            => $asset->status,
+                                    'type'              => $asset->asset?->type,
+                                    'icon_url'          => $asset->asset?->icon_url,
+                                    'label'             => $asset->asset?->label,
+                                    'symbol'            => $asset->asset?->symbol,
+                                    'is_verified'       => $asset->asset?->is_verified,
+                                    'value'             => $asset->asset?->value,
+                                    'code'              => $asset->asset?->code,
+                                    'description'       => $asset->asset?->description,
+                                    'is_active'         => $asset->asset?->is_active,
+                                    'withdrawal_fee'    => $asset->asset?->withdrawal_fee,
+                                    'network_fee'       => $asset->asset?->network_fee,
+                                ]
+                            )
+                        ]
+                    ],
+                    'token' => $token->plainTextToken,
+                    'token_type' => 'Bearer',
+                    'abilities' => $token->accessToken->abilities,
+                    'issued_at' => now()->toIso8601String(),
+                ],
+            ], 200);
+        } catch (Exception $e) {
             logger()->error('Validation failed during login', [
-                'errors' => $e->errors(),
+                // 'errors' => $e->errors(),
+                'message' => $e->getMessage(),
                 'payload' => $request->all(),
             ]);
             throw ValidationException::withMessages([
                 'email' => ['Invalid credentials provided for Core-X authentication.'],
             ]);
         }
-        $passwordHash = $user?->password ?? $user?->pin ?? null;
-        $isValidPassword = $user
-            && (
-                ($passwordHash && Hash::check($request->password, $passwordHash))
-                // || ($user->pin && $user->pin === $request->password)
-            );
-
-        if (! $user || ! $isValidPassword) {
-            throw ValidationException::withMessages([
-                'email' => ['An Invalid credentials provided for Core-X authentication.'],
-            ]);
-        }
-
-        // Default abilities for POS terminals / frontend clients if none provided
-        $abilities = user_access();
-
-        $token = $user->createToken($xapp->tagline ?? $xapp->name, $abilities);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Authentication successful.',
-            'data' => [
-                'user' => [
-                    'id'                    => make_uuid($user->id, 'user'),
-                    'client_id'             => make_uuid($user->client_id, 'client'),
-                    'name'                  => $user->name,
-                    'username'              => $user->username,
-                    'email'                 => $user->email,
-                    'first_name'            => $user->first_name,
-                    'surname'               => $user->surname,
-                    'last_name'             => $user->last_name,
-                    'phone_number'          => $user->phone_number,
-                    'country'               => $user->country?->name,
-                    'state'                 => $user->state?->name,
-                    'city'                  => $user->city?->name,
-                    'bio'                   => $user->bio,
-                    'profile_photo_url' => $user->profile_photo_url ?? 'https://api.dicebear.com/10.x/planets/svg?seed=happy',
-                    'language'              => $user->language,
-                    'gender'                => $user->gender,
-                    'address'               => $user->address,
-                    'date_of_birth'         => $user->date_of_birth,
-                    'status'                => $user->status,
-                    'preferences'           => $user->preferences,
-                    'timezone'              => $user->timezone,
-                    'trust_score'           => $user->trust_score ?? 0,
-                    'wallet'        => [
-                        'uuid'              => make_uuid($user->wallet?->id, 'wallet'),
-                        'label'             => $user->wallet?->label ?? null,
-                        'icon_url'          => $user->wallet?->icon_url ?? null,
-                        'address'           => $user->wallet?->address ?? null,
-                        'number'            => $user->wallet?->number ?? null,
-                        'locked_balance'    => $user->wallet?->locked_balance ?? 0,
-                        'balance'           => $user->wallet?->balance ?? 0,
-                        'available_balance' => $user->wallet?->available_balance ?? 0,
-                        'created_by'        => $user->wallet?->created_by ?? null,
-                        'provider'          => $user->wallet?->provider ?? 'com.almaxcloud.corex',
-                        'tag'               => $user->wallet?->tag ?? null,
-                        'metadata'          => $user->wallet?->metadata ?? null,
-                        'is_default'        => $user->wallet?->is_default ?? null,
-                        'is_active'         => $user->wallet?->is_active ?? null,
-                        'status'            => $user->wallet?->status ?? null,
-                        'last_balance_sync' => $user->wallet?->last_balance_sync ?? null,
-                        'activated_at'      => $user->wallet?->activated_at ?? null,
-                        'deactivated_at'    => $user->wallet?->deactivated_at ?? null,
-                        'account_number'    => $user->wallet?->account_number ?? null,
-                        'account_name'      => $user->wallet?->account_name ?? null,
-                        'bank_id'           => $user->wallet?->bank_id ?? null,
-                        'bank_name'         => $user->wallet?->bank?->name ?? null,
-                        'assets'            => $user->wallet?->assets->map(
-                            fn($asset) => [
-                                'balance'           => $asset->balance,
-                                'address'           => $asset->address,
-                                'locked_balance'    => $asset->locked_balance,
-                                'pending_balance'   => $asset->pending_balance,
-                                'status'            => $asset->status,
-                                'type'              => $asset->asset?->type,
-                                'icon_url'          => $asset->asset?->icon_url,
-                                'label'             => $asset->asset?->label,
-                                'symbol'            => $asset->asset?->symbol,
-                                'is_verified'       => $asset->asset?->is_verified,
-                                'value'             => $asset->asset?->value,
-                                'code'              => $asset->asset?->code,
-                                'description'       => $asset->asset?->description,
-                                'is_active'         => $asset->asset?->is_active,
-                                'withdrawal_fee'    => $asset->asset?->withdrawal_fee,
-                                'network_fee'       => $asset->asset?->network_fee,
-                            ]
-                        )
-                    ]
-                ],
-                'token' => $token->plainTextToken,
-                'token_type' => 'Bearer',
-                'abilities' => $token->accessToken->abilities,
-                'issued_at' => now()->toIso8601String(),
-            ],
-        ], 200);
     }
 
     /**
