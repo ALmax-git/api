@@ -45,18 +45,14 @@ class FileSystemController extends Controller
 
         try {
             DB::transaction(function () use ($user, $folder_id, $file_url) {
-                $fileSystemItem = FileSystemItem::updateOrCreate(
+                $fileSystemItem = FileSystemItem::create(
                     [
                         'owner_id' => $user->id,
                         'parent_id' => $folder_id,
                         'type' => 'file',
-                        // Add a unique identifier or custom logic if you track signature files explicitly, 
-                        // otherwise use updateOrCreate based on your business rule.
                         'mime_type' => 'image',
                         'size' => '2048',
                         'disk' => 'public',
-                    ],
-                    [
                         'name' => $this->getUniqueFileName('signature', $folder_id),
                         'path' => $folder_id,
                         'storage_path' => $file_url,
