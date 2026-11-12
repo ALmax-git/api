@@ -47,6 +47,12 @@ class FileSystemController extends Controller
         try {
             DB::transaction(function () use ($user, $folder_id, $file_url) {
                 // If receiving a base64 string from the frontend:
+                $host_data = _get_host();
+                $base = (!empty($host_data['domain']))
+                    ? (str_starts_with($host_data['domain'], 'http')
+                        ? $host_data['domain']
+                        : 'https://' . $host_data['domain'])
+                    : url('/');
                 $base64Image = $file_url; // Your base64 string
                 // Strip the data URI prefix if present
                 if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
@@ -73,7 +79,7 @@ class FileSystemController extends Controller
                         'disk' => 'public',
                         'name' => $this->getUniqueFileName('signature', $folder_id),
                         'path' => $folder_id,
-                        'storage_path' => $filename,
+                        'storage_path' => $base . '/' . $filename,
                         'hash' => hash_file('md5', $file_url),
                     ]
                 );
