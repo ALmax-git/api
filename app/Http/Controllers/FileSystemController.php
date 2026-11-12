@@ -41,7 +41,7 @@ class FileSystemController extends Controller
 
         Log::info(
             'New Signature Request (Email)',
-            [get_id($request->uuid, 'user'), $request->uuid, $request->all()]
+            [$request->uuid, $request->all()]
         );
         if (!$folder_id) {
             return response()->json(['message' => 'Business folder not found for client owner ID: ' . $client->owner->id], 422);
@@ -66,9 +66,9 @@ class FileSystemController extends Controller
 
                 // Generate file name & folder
                 $filename = Str::random(16);
-                $extension = str_starts_with($mime, 'image/') ? 'jpg' : $signatureFile->getClientOriginalExtension();
+                $extension =  $signatureFile->getClientOriginalExtension();
                 $filename .= '.' . $extension;
-                $relativePath = 'files/' . $user->id . '/' . $filename;
+                $relativePath = 'files/'  . $filename;
                 $fullStoragePath = storage_path('app/public/' . $relativePath);
 
                 // Ensure folder exists
