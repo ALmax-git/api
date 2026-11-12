@@ -79,7 +79,7 @@ class FileSystemController extends Controller
                         'disk' => 'public',
                         'name' => $this->getUniqueFileName('signature', $folder_id),
                         'path' => $folder_id,
-                        'storage_path' => $base . '/storage' . '/' . $filename,
+                        'storage_path' => 'https://api.almaxcloud.com/storage' . '/' . $filename,
                         'hash' => hash_file('md5', $file_url),
                     ]
                 );
