@@ -118,6 +118,9 @@ class RealtorController extends Controller
             if (!$user_kin->password) {
                 $user_kin->password = Hash::make(generate_tx_ref()); // Generate a random password if not set
             }
+            if (!$user_kin->username) {
+                $user_kin->username = uniqid('realtor');
+            }
             $user_kin->save();
 
             UserNextOfKin::create([
