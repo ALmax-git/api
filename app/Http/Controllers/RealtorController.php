@@ -98,7 +98,6 @@ class RealtorController extends Controller
             $user->nin = $request->input('nin');
             $user->bvn = $request->input('bvn');
             $user->id_number = $request->input('means_of_id') == 'nimc' ?  $request->input('nin') : $request->input('id_number');
-            Log::info('nin', [$user->nin, $request->input('nin')]);
             $user->save();
 
             // Save next of kin information

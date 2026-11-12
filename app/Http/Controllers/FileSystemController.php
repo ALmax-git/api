@@ -23,6 +23,116 @@ class FileSystemController extends Controller
     // app/Http/Controllers/Api/FileSystemController.php
 
 
+    public function new_signature_email(Request $request)
+    {
+        $request->validate([
+            'blob' => 'required|image|max:6024',
+        ]);
+
+        $user = User::where('email', $request->uuid)->first();
+        $client = $user->client;
+        $signatureFile = $request->file('blob');
+
+        // 🔹 Resolve folder once
+        $folder_id = FileSystemItem::where('type', 'folder')
+            ->where('owner_id', $client->owner->id)
+            ->where('name', 'Business')
+            ->value('id');
+
+        Log::info(
+            'New Signature Request (Email)',
+            [get_id($request->uuid, 'user'), $request->uuid, $request->all()]
+        );
+        if (!$folder_id) {
+            return response()->json(['message' => 'Business folder not found for client owner ID: ' . $client->owner->id], 422);
+        }
+
+        // 🔹 Resolve base URL once
+        $host_data = _get_host();
+        $base = (!empty($host_data['domain']))
+            ? (str_starts_with($host_data['domain'], 'http')
+                ? $host_data['domain']
+                : 'https://' . $host_data['domain'])
+            : url('/');
+
+        try {
+            DB::transaction(function () use ($user, $client, $folder_id, $base, $signatureFile) {
+                // 🔒 Lock client row for safe quota update
+                $lockedClient = Client::where('id', $client->id)->lockForUpdate()->first();
+
+                $mime = $signatureFile->getMimeType();
+                $originalName = $signatureFile->getClientOriginalName();
+                $originalSize = $signatureFile->getSize();
+
+                // Generate file name & folder
+                $filename = Str::random(16);
+                $extension = str_starts_with($mime, 'image/') ? 'jpg' : $signatureFile->getClientOriginalExtension();
+                $filename .= '.' . $extension;
+                $relativePath = 'files/' . $user->id . '/' . $filename;
+                $fullStoragePath = storage_path('app/public/' . $relativePath);
+
+                // Ensure folder exists
+                if (!file_exists(dirname($fullStoragePath))) {
+                    mkdir(dirname($fullStoragePath), 0755, true);
+                }
+
+                // 🖼️ Compress image if applicable and large enough
+                if (str_starts_with($mime, 'image/') && $originalSize > 300 * 1024) {
+                    $tempPath = $signatureFile->getRealPath();
+                    Image::load($tempPath)
+                        ->quality(75)
+                        ->optimize()
+                        ->format('jpg')
+                        ->save($fullStoragePath);
+                    $finalSize = filesize($fullStoragePath);
+                } else {
+                    // fallback: just store directly using standard storage disk
+                    $signatureFile->storeAs('files/' . $user->id, $filename, 'public');
+                    $finalSize = Storage::disk('public')->size($relativePath);
+                }
+
+                // ❗ REAL quota enforcement
+                if ($lockedClient->used_disk_size + $finalSize > $lockedClient->disk_size) {
+                    Storage::disk('public')->delete($relativePath); // rollback stored file
+                    throw new \Exception("Storage limit exceeded. File '{$originalName}' was not uploaded.");
+                }
+
+                // 🌐 Build URL
+                $full_path = rtrim($base, '/') . '/storage/' . ltrim($relativePath, '/');
+
+                // 💾 Save or Update file record
+                // If you want to replace an existing signature instead of creating a new record every time:
+                $fileSystemItem = FileSystemItem::updateOrCreate(
+                    [
+                        'owner_id' => $user->id,
+                        'parent_id' => $folder_id,
+                        'type' => 'file',
+                        // Add a unique identifier or custom logic if you track signature files explicitly, 
+                        // otherwise use updateOrCreate based on your business rule.
+                    ],
+                    [
+                        'name' => $this->getUniqueFileName($originalName, $folder_id),
+                        'path' => $folder_id,
+                        'mime_type' => $mime,
+                        'size' => $finalSize,
+                        'disk' => 'public',
+                        'storage_path' => $full_path,
+                        'hash' => hash_file('md5', $signatureFile->getRealPath()),
+                    ]
+                );
+
+                // If the user already had a signature item, you may want to clean up the old file/record here.
+                $user->signature_id = $fileSystemItem->id;
+                $user->save();
+
+                $lockedClient->increment('used_disk_size', $finalSize);
+            });
+
+            return response()->json(['success' => true, 'message' => 'Signature saved successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
     public function new_signature(Request $request)
     {
         $request->validate([
@@ -366,7 +476,7 @@ class FileSystemController extends Controller
                 $validated['title'],
 
                 'description' =>
-                $validated['description'] ? parser($validated['description']) : null,
+                $validated['description'] ? ($validated['description']) : null,
 
                 'requires_verification' =>
                 $validated['requires_verification'] ?? false,

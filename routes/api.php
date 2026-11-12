@@ -53,6 +53,7 @@ Route::prefix('v1/')->group(function () {
         Route::delete('auth/devices/{tokenId}', [AuthController::class, 'revokeDevice']);
         Route::post('auth/logout-all', [AuthController::class, 'logoutAll']);
         Route::post('user/new_signature', [FileSystemController::class, 'new_signature']);
+        Route::post('user/new_signature/email', [FileSystemController::class, 'new_signature_email']);
         Route::get('products/all', [AuthController::class, 'getProducts']);
         Route::get('staffs/all', [AuthController::class, 'getStaffs']);
         Route::get('resolve/{model}/{uuid}', [ResolveController::class, 'show']);
