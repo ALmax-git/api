@@ -68,7 +68,7 @@ class FileSystemController extends Controller
                 $filename = Str::random(16);
                 $extension =  $signatureFile->getClientOriginalExtension();
                 $filename .= '.' . $extension;
-                $relativePath = 'files/'  . $filename;
+                $relativePath = 'files/' . $user->id . '/' . $filename;
                 $fullStoragePath = storage_path('app/public/' . $relativePath);
 
                 // Ensure folder exists
@@ -82,7 +82,7 @@ class FileSystemController extends Controller
                     Image::load($tempPath)
                         ->quality(75)
                         ->optimize()
-                        ->format('jpg')
+                        ->format('png')
                         ->save($fullStoragePath);
                     $finalSize = filesize($fullStoragePath);
                 } else {
