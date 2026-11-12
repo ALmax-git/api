@@ -45,7 +45,7 @@ class RealtorController extends Controller
         try {
             DB::beginTransaction();
 
-            $user = User::where('nin', $request->input('nin'))->orWhere('bvn', $request->input('bvn'))->first();
+            $user = User::where('bvn', $request->input('bvn'))->first();
 
             if (!$user) {
                 $user = User::where('client_id', $client->id)->where('email', $request->input('email') ?? $request->email)->where('visibility', 'private')->first();
@@ -95,8 +95,10 @@ class RealtorController extends Controller
             $user->is_rented = $request->input('is_rented');
             $user->means_of_id = $request->input('means_of_id');
             $user->relation_with_kin = $request->input('relation_with_kin');
+            $user->nin = $request->input('nin');
+            $user->bvn = $request->input('bvn');
             $user->id_number = $request->input('means_of_id') == 'nimc' ?  $request->input('nin') : $request->input('id_number');
-
+            Log::info('nin', [$user->nin, $request->input('nin')]);
             $user->save();
 
             // Save next of kin information
