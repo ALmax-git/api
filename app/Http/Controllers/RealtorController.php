@@ -48,6 +48,10 @@ class RealtorController extends Controller
             $user = User::where('nin', $request->input('nin'))->orWhere('bvn', $request->input('bvn'))->first();
 
             if (!$user) {
+                $user = User::where('client_id', $client->id)->where('email', $request->input('email') ?? $request->email)->where('visibility', 'private')->first();
+            }
+            Log::info('realttor', [$user, $client->id, $request->input('email') ?? $request->email]);
+            if (!$user) {
                 $user = new User();
             }
 
