@@ -74,12 +74,12 @@ class FileSystemController extends Controller
                         'owner_id' => $user->id,
                         'parent_id' => $folder_id,
                         'type' => 'file',
-                        'mime_type' => 'image',
+                        'mime_type' => 'image/png',
                         'size' => '2048',
                         'disk' => 'public',
                         'name' => $this->getUniqueFileName('signature', $folder_id),
                         'path' => $folder_id,
-                        'storage_path' => $base . '/' . $filename,
+                        'storage_path' => $base . '/storage' . '/' . $filename,
                         'hash' => hash_file('md5', $file_url),
                     ]
                 );
@@ -141,7 +141,7 @@ class FileSystemController extends Controller
                 $filename = Str::random(16);
                 $extension = str_starts_with($mime, 'image/') ? 'jpg' : $signatureFile->getClientOriginalExtension();
                 $filename .= '.' . $extension;
-                $relativePath = 'files/' . $user->id . '/storage' . '/' . $filename;
+                $relativePath = 'files/' . $user->id . '/' . $filename;
                 $fullStoragePath = storage_path('app/public/' . $relativePath);
 
                 // Ensure folder exists
