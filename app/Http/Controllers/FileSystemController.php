@@ -68,6 +68,8 @@ class FileSystemController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Signature saved successfully.']);
         } catch (\Exception $e) {
+
+            Log::info('some', [$e]);
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
