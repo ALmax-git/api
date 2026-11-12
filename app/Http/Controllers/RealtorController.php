@@ -13,6 +13,7 @@ use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 use function Illuminate\Log\log;
@@ -51,7 +52,7 @@ class RealtorController extends Controller
             }
 
             if (!$user->password) {
-                $user->password = bcrypt(random_bytes(16)); // Generate a random password if not set
+                $user->password = Hash::make(generate_tx_ref()); // Generate a random password if not set
             }
             $client = get_client_namespace('com.realtor.mobile');
             if (!$client) {
