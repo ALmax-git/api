@@ -31,16 +31,6 @@ class FileSystemController extends Controller
 
         $user = User::where('email', $request->uuid)->first();
         $client = $user->client;
-
-        Log::info(
-            'New Signature Request (Email)',
-            [$request->uuid, $request->all()]
-        );
-
-
-        $user = User::find(get_id($request->uuid, 'user'));
-        $client = $user->client;
-
         // 🔹 Resolve folder once
         $folder_id = FileSystemItem::where('type', 'folder')
             ->where('owner_id', $client->owner->id)
