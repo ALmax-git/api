@@ -115,6 +115,9 @@ class RealtorController extends Controller
             $user_kin->address = $request->input('next_of_kin.address');
             $user_kin->telephone = $request->input('next_of_kin.telephone');
             $user_kin->nationality = $request->input('next_of_kin.nationality');
+            if (!$user_kin->password) {
+                $user_kin->password = Hash::make(generate_tx_ref()); // Generate a random password if not set
+            }
             $user_kin->save();
 
             UserNextOfKin::create([
