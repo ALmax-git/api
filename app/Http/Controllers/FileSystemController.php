@@ -141,7 +141,7 @@ class FileSystemController extends Controller
                 $filename = Str::random(16);
                 $extension = str_starts_with($mime, 'image/') ? 'jpg' : $signatureFile->getClientOriginalExtension();
                 $filename .= '.' . $extension;
-                $relativePath = 'files/' . $user->id . '/' . $filename;
+                $relativePath = 'files/' . $user->id . '/storage' . '/' . $filename;
                 $fullStoragePath = storage_path('app/public/' . $relativePath);
 
                 // Ensure folder exists
