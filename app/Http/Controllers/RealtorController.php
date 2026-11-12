@@ -174,7 +174,7 @@ class RealtorController extends Controller
             EquityApplication::updateOrCreate(
                 ['user_id' => $user->id],
                 [
-                    'pfa_id' => get_id($request->pfa_id, 'client'),
+                    'pfa_id' => $request->pfa_i ? get_id($request->pfa_id, 'client') : null,
                     'pen' => $request->pen,
                     'sworn_date' => now(),
                 ]
