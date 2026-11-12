@@ -142,11 +142,21 @@ class RealtorController extends Controller
             $referee = Referee::find($user->referee_id);
 
             //existing
-            if ($user->_referees()->where('referee_number', $request->input('referee.read_exif_data'))->exists()) {
+            if ($user->_referees()->where('referee_number', $request->input('referee.referee_number'))->exists()) {
 
-                return response()->json([
-                    'message' => 'Referee with this number already exists for this user.'
-                ], 400);
+
+                $referee = Referee::where('referee_number', $request->input('referee.referee_number'))->first();
+                if ($referee) {
+                    $referee->name                      = $request->input('referee.name');
+                    $referee->referee_number                        = $request->input('referee.referee_number');
+                    $referee->known_period                      = $request->input('referee.known_period');
+                    $referee->current_account_with                      = $request->input('referee.current_account_with');
+                    $referee->referee_name                      = $request->input('referee.referee_name');
+                    $referee->bank_name_address                         = $request->input('referee.bank_name_address');
+                    $referee->referee_account_number                        = $request->input('referee.referee_account_number');
+                    $referee->user_id = $user->id;
+                    $referee->save();
+                }
             }
             //not > 2
             if ($user->_referees()->count() >= 2) {
