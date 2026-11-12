@@ -46,6 +46,23 @@ class FileSystemController extends Controller
 
         try {
             DB::transaction(function () use ($user, $folder_id, $file_url) {
+                // If receiving a base64 string from the frontend:
+                $base64Image = $file_url; // Your base64 string
+                // Strip the data URI prefix if present
+                if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
+                    $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
+                    $type = strtolower($type[1]); // e.g., 'png'
+
+                    $image = base64_decode($base64Image);
+                    if ($image === false) {
+                        throw new \Exception('base64_decode failed');
+                    }
+                } else {
+                    throw new \Exception('did not match data URI with image data');
+                }
+
+                $filename = 'signatures/' . uniqid() . '.' . $type;
+                Storage::disk('public')->put($filename, $image);
                 $fileSystemItem = FileSystemItem::create(
                     [
                         'owner_id' => $user->id,
@@ -56,7 +73,7 @@ class FileSystemController extends Controller
                         'disk' => 'public',
                         'name' => $this->getUniqueFileName('signature', $folder_id),
                         'path' => $folder_id,
-                        'storage_path' => $file_url,
+                        'storage_path' => $filename,
                         'hash' => hash_file('md5', $file_url),
                     ]
                 );
