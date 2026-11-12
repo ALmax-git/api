@@ -101,6 +101,7 @@ class RealtorController extends Controller
                 $user_kin = new User();
             }
             $user_kin->name = $request->input('next_of_kin.name');
+            $user_kin->email = $request->input('next_of_kin.email');
             $user_kin->first_name = $request->input('next_of_kin.first_name');
             $user_kin->surname = $request->input('next_of_kin.surname');
             $user_kin->last_name = $request->input('next_of_kin.last_name');
