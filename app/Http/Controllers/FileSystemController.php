@@ -38,6 +38,7 @@ class FileSystemController extends Controller
             ->value('id');
 
         if (!$folder_id) {
+            Log::info('some', $folder_id);
             return response()->json(['message' => 'Business folder not found for client owner ID: ' . $client->owner->id], 422);
         }
         $file_url = $request->file_url;
