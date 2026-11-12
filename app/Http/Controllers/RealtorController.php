@@ -32,7 +32,7 @@ class RealtorController extends Controller
             ], 401);
         }
 
-        $client = Client::find($user->client_id);
+        $client = get_client_namespace('com.realtor.mobile');
         if (!$client) {
             return response()->json([
                 'success' => false,
@@ -50,6 +50,7 @@ class RealtorController extends Controller
             if (!$user) {
                 $user = User::where('client_id', $client->id)->where('email', $request->input('email') ?? $request->email)->where('visibility', 'private')->first();
             }
+            // error happen around here
             Log::info('realttor', [$user, $client->id, $request->input('email') ?? $request->email]);
             if (!$user) {
                 $user = new User();
@@ -58,7 +59,6 @@ class RealtorController extends Controller
             if (!$user->password) {
                 $user->password = Hash::make(generate_tx_ref()); // Generate a random password if not set
             }
-            $client = get_client_namespace('com.realtor.mobile');
             if (!$client) {
                 return response()->json([
                     'message' => 'Client namespace not found',
@@ -127,12 +127,15 @@ class RealtorController extends Controller
             }
             $user_kin->save();
 
-            UserNextOfKin::create([
-                'user_id'               => $user->id,
-                'kin_id'                => $user_kin->id,
-                'relationship'          => $request->input('relation_with_kin'),
-            ]);
-
+            UserNextOfKin::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                ],
+                [
+                    'kin_id' => $user_kin->id,
+                    'relationship' => $request->input('relation_with_kin'),
+                ]
+            );
             $user->next_of_kin_id = $user_kin->id;
             $user->save();
 
@@ -147,20 +150,21 @@ class RealtorController extends Controller
             }
             //not > 2
             if ($user->_referees()->count() >= 2) {
-                return response()->json([
-                    'message' => 'You can only add a maximum of 2 referees for this user.'
-                ], 400);
+                // return response()->json([
+                //     'message' => 'You can only add a maximum of 2 referees for this user.'
+                // ], 400);
+            } else {
+                $referee = new Referee();
+                $referee->name                      = $request->input('referee.name');
+                $referee->referee_number                        = $request->input('referee.referee_number');
+                $referee->known_period                      = $request->input('referee.known_period');
+                $referee->current_account_with                      = $request->input('referee.current_account_with');
+                $referee->referee_name                      = $request->input('referee.referee_name');
+                $referee->bank_name_address                         = $request->input('referee.bank_name_address');
+                $referee->referee_account_number                        = $request->input('referee.referee_account_number');
+                $referee->user_id = $user->id;
+                $referee->save();
             }
-            $referee = new Referee();
-            $referee->name                      = $request->input('referee.name');
-            $referee->referee_number                        = $request->input('referee.referee_number');
-            $referee->known_period                      = $request->input('referee.known_period');
-            $referee->current_account_with                      = $request->input('referee.current_account_with');
-            $referee->referee_name                      = $request->input('referee.referee_name');
-            $referee->bank_name_address                         = $request->input('referee.bank_name_address');
-            $referee->referee_account_number                        = $request->input('referee.referee_account_number');
-            $referee->user_id = $user->id;
-            $referee->save();
 
             UserClient::updateOrCreate(
                 [
