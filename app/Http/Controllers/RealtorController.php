@@ -28,7 +28,6 @@ class RealtorController extends Controller
     public function upload_client_media(Request $request)
     {
 
-        Log::info('po', [$request->all()]);
         $request->validate([
             'files' => 'required|array',
             'files.*' => 'required|image|max:6024',
@@ -37,9 +36,7 @@ class RealtorController extends Controller
         if (!$request->hasFile('files')) {
             return response()->json(['message' => 'No files uploaded.'], 422);
         }
-        $user = User::where('email', $request->payload);
-
-        $client = $user->client;
+        $user = User::where('email', $request->payload)->first();
 
         if (!$user) {
             return response()->json([
@@ -47,6 +44,8 @@ class RealtorController extends Controller
                 'message' => 'User not authenticated.',
             ], 401);
         }
+
+        $client = $user->client;
 
         try {
 
@@ -59,9 +58,6 @@ class RealtorController extends Controller
             if (!$folder_id) {
                 throw new \Exception('Business folder not found for client owner ID: ' . $client->owner->id);
             }
-
-            // 🔹 Resolve base URL once
-            $host_data = _get_host();
 
             $base = 'https://api.almaxcloud.com';
             $equity_application = EquityApplication::where('user_id', $user->id)->first();
