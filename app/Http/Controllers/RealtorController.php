@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\UserStatus;
 use App\Models\Client;
 use App\Models\EquityApplication;
+use App\Models\FileSystemItem;
 use App\Models\Referee;
 use App\Models\User;
 use App\Models\UserClient;
@@ -15,11 +16,198 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Spatie\Image\Image;
 
 use function Illuminate\Log\log;
 
 class RealtorController extends Controller
 {
+
+    public function upload_product_media(Request $request)
+    {
+
+        Log::info('po', [$request]);
+        $request->validate([
+            'files' => 'required|array',
+            'files.*' => 'required|image|max:6024',
+            'variant_id' => 'nullable|string',
+        ]);
+        $variant_id = $request->input('variant_id', null);
+        if (!$request->hasFile('files')) {
+            return response()->json(['message' => 'No files uploaded.'], 422);
+        }
+        $user = $request->user();
+
+        $client = $user->client;
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+        $product = null;
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found.',
+            ], 404);
+        }
+        if ($product->client_id != $user->client_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 492);
+        }
+
+        try {
+
+            // 🔹 Resolve folder once
+            $folder_id = fileSystemItem::where('type', 'folder')
+                ->where('owner_id', $client->owner->id)
+                ->where('name', 'Business')
+                ->value('id');
+
+            if (!$folder_id) {
+                throw new \Exception('Business folder not found for client owner ID: ' . $client->owner->id);
+            }
+
+            // 🔹 Resolve base URL once
+            $host_data = _get_host();
+            /**
+             *   if (url('/') === 'http://127.0.0.1') {
+
+                $base = url('/') . '8080';
+            }
+
+            if (!empty($host_data['domain'])) {
+                $domain = trim($host_data['domain'], '/');
+                $parsed = parse_url(str_contains($domain, '://') ? $domain : 'https://' . $domain);
+
+                $scheme = strtolower($parsed['scheme'] ?? 'https');
+                $host = $parsed['host'] ?? $domain;
+                $port = $parsed['port'] ?? null;
+
+                if ($port === null && !empty($_SERVER['SERVER_PORT'])) {
+                    $serverPort = (int) $_SERVER['SERVER_PORT'];
+                    if (($scheme === 'http' && $serverPort !== 80) || ($scheme === 'https' && $serverPort !== 443)) {
+                        $port = $serverPort;
+                    }
+                }
+
+                $netloc = $host;
+                if ($port !== null && (($scheme === 'http' && $port != 80) || ($scheme === 'https' && $port != 443))) {
+                    $netloc .= ':' . $port;
+                }
+
+                $base = (url('/') === 'http://127.0.0.1' ? 'http' : $scheme) . '://' . $netloc;
+            }
+
+             */
+            $base = (!empty($host_data['domain']))
+                ? (str_starts_with($host_data['domain'], 'http')
+                    ? $host_data['domain']
+                    : 'https://' . $host_data['domain'])
+                : url('/');
+            if (url('/') === 'http://127.0.0.1') {
+
+                $base = url('/') . '8080';
+            }
+
+            foreach ($request->file('files') as $file) {
+
+                DB::transaction(function () use ($file, $user, $product, $variant_id, $client, $folder_id, $base) {
+
+                    // 🔒 Lock client row for safe quota update
+                    $lockedClient = Client::where('id', $client->id)->lockForUpdate()->first();
+
+                    $mime         = $file->getMimeType();
+                    $originalName = $file->getClientOriginalName();
+                    $originalSize = $file->getSize();
+
+                    // Generate file name & folder
+                    $filename = Str::random(16);
+                    $extension = str_starts_with($mime, 'image/') ? 'jpg' : $file->getClientOriginalExtension();
+                    $filename .= '.' . $extension;
+
+                    $relativePath = 'files/' . $user->id . '/' . $filename;
+                    $fullStoragePath = storage_path('app/public/' . $relativePath);
+
+                    // Ensure folder exists
+                    if (!file_exists(dirname($fullStoragePath))) {
+                        mkdir(dirname($fullStoragePath), 0755, true);
+                    }
+
+                    // 🖼️ Compress image if applicable and large enough
+                    if (str_starts_with($mime, 'image/') && $originalSize > 300 * 1024) {
+                        $tempPath = $file->getRealPath();
+
+                        Image::load($tempPath)
+                            ->quality(75)
+                            ->optimize()
+                            ->format('jpg')
+                            ->save($fullStoragePath);
+
+                        $finalSize = filesize($fullStoragePath);
+                    } else {
+                        // fallback: just store directly
+                        $stored = $file->storeAs('files/' . $user->id, $filename, 'public');
+                        $finalSize = Storage::disk('public')->size($relativePath);
+                    }
+                    // ❗ REAL quota enforcement
+                    if ($lockedClient->used_disk_size + $finalSize > $lockedClient->disk_size) {
+                        Storage::disk('public')->delete($relativePath); // rollback stored file
+                        alert_error("Storage limit exceeded. File '{$originalName}' was not uploaded.");
+                        return;
+                    }
+                    // 🌐 Build URL
+                    $full_path = rtrim($base, '/') . '/storage/' . ltrim($relativePath, '/');
+
+                    // 💾 Save file record
+                    $fileSystemItem = FileSystemItem::create([
+                        'name'         => $this->getUniqueFileName($originalName, $folder_id, $client->owner->id),
+                        'path'         => $folder_id,
+                        'type'         => 'file',
+                        'parent_id'    => $folder_id,
+                        'owner_id'     => $user->id,
+                        'mime_type'    => $mime,
+                        'size'         => $finalSize,
+                        'disk'         => 'public',
+                        'storage_path' => $full_path,
+                        'hash'         => hash_file('md5', $file->getRealPath()),
+                    ]);
+
+                    // 🔗 Attach to produc
+
+                    // 📊 Increment immediately
+                    $lockedClient->increment('used_disk_size', $finalSize);
+                });
+            }
+            if (($request->input('redirect_url'))) {
+                return redirect($request->input('redirect_url'), 302);
+            }
+
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product uploaded Successfull.',
+            ], 200);
+        } catch (\Throwable $e) {
+
+            report($e);
+
+            if (($request->input('redirect_url'))) {
+                return redirect($request->input('redirect_url'), 500);
+            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Somethings whent wrong: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function save_client(Request $request)
     {
 

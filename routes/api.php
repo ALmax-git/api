@@ -61,6 +61,7 @@ Route::prefix('v1/')->group(function () {
         Route::get('sales/{token}', [SalesController::class, 'sales'])->name('account.sales');
 
 
+        Route::post('realtor/client/upload/media', [RealtorController::class, 'upload_client_media'])->name('realtor.client.upload');
         Route::post('realtor/client/save', [RealtorController::class, 'save_client'])->name('realtor.client.save');
         Route::get('realtor/rsa/{user}', function ($user) {
             $user = User::find(get_id(urldecode($user), 'user'));
