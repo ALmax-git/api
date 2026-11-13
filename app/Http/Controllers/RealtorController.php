@@ -32,13 +32,12 @@ class RealtorController extends Controller
         $request->validate([
             'files' => 'required|array',
             'files.*' => 'required|image|max:6024',
-            'variant_id' => 'nullable|string',
+            'payload' => 'required|email'
         ]);
-        $variant_id = $request->input('variant_id', null);
         if (!$request->hasFile('files')) {
             return response()->json(['message' => 'No files uploaded.'], 422);
         }
-        $user = $request->user();
+        $user = User::where('email', $request->payload);
 
         $client = $user->client;
 
@@ -47,19 +46,6 @@ class RealtorController extends Controller
                 'success' => false,
                 'message' => 'User not authenticated.',
             ], 401);
-        }
-        $product = null;
-        if (!$product) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product not found.',
-            ], 404);
-        }
-        if ($product->client_id != $user->client_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not authenticated.',
-            ], 492);
         }
 
         try {
@@ -76,49 +62,18 @@ class RealtorController extends Controller
 
             // 🔹 Resolve base URL once
             $host_data = _get_host();
-            /**
-             *   if (url('/') === 'http://127.0.0.1') {
 
-                $base = url('/') . '8080';
+            $base = 'https://api.almaxcloud.com';
+            $equity_application = EquityApplication::where('user_id', $user->id)->first();
+            if (!$equity_application) {
+                return response()->json([
+                    'message' => 'Ops you need to fill user Equity Application First',
+                    'success' => false,
+                ]);
             }
-
-            if (!empty($host_data['domain'])) {
-                $domain = trim($host_data['domain'], '/');
-                $parsed = parse_url(str_contains($domain, '://') ? $domain : 'https://' . $domain);
-
-                $scheme = strtolower($parsed['scheme'] ?? 'https');
-                $host = $parsed['host'] ?? $domain;
-                $port = $parsed['port'] ?? null;
-
-                if ($port === null && !empty($_SERVER['SERVER_PORT'])) {
-                    $serverPort = (int) $_SERVER['SERVER_PORT'];
-                    if (($scheme === 'http' && $serverPort !== 80) || ($scheme === 'https' && $serverPort !== 443)) {
-                        $port = $serverPort;
-                    }
-                }
-
-                $netloc = $host;
-                if ($port !== null && (($scheme === 'http' && $port != 80) || ($scheme === 'https' && $port != 443))) {
-                    $netloc .= ':' . $port;
-                }
-
-                $base = (url('/') === 'http://127.0.0.1' ? 'http' : $scheme) . '://' . $netloc;
-            }
-
-             */
-            $base = (!empty($host_data['domain']))
-                ? (str_starts_with($host_data['domain'], 'http')
-                    ? $host_data['domain']
-                    : 'https://' . $host_data['domain'])
-                : url('/');
-            if (url('/') === 'http://127.0.0.1') {
-
-                $base = url('/') . '8080';
-            }
-
             foreach ($request->file('files') as $file) {
 
-                DB::transaction(function () use ($file, $user, $product, $variant_id, $client, $folder_id, $base) {
+                DB::transaction(function () use ($file, $user, $equity_application, $client, $folder_id, $base) {
 
                     // 🔒 Lock client row for safe quota update
                     $lockedClient = Client::where('id', $client->id)->lockForUpdate()->first();
@@ -181,6 +136,17 @@ class RealtorController extends Controller
 
                     // 🔗 Attach to produc
 
+                    $meta = $equity_application->meta;
+                    if (isset($meta['documents'])) {
+                        if (!is_array($meta['documents'])) {
+                            $meta['documents'] = [];
+                        }
+                    } else {
+                        $meta['documents'] = [];
+                    }
+                    $meta['documents'][] = ['id' => $fileSystemItem->id, 'storage_path' => $full_path, 'name' => $fileSystemItem->name ?? 'equity_application_docs'];
+                    $equity_application->meta = $meta;
+                    $equity_application->save();
                     // 📊 Increment immediately
                     $lockedClient->increment('used_disk_size', $finalSize);
                 });
@@ -192,7 +158,7 @@ class RealtorController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Product uploaded Successfull.',
+                'message' => 'Documents uploaded Successfull.',
             ], 200);
         } catch (\Throwable $e) {
 
