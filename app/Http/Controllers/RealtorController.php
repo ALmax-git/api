@@ -25,6 +25,27 @@ use function Illuminate\Log\log;
 class RealtorController extends Controller
 {
 
+
+    private function getUniqueFileName(string $originalName, mixed $folder_id): string
+    {
+        $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+        $name = $originalName;
+        $counter = 1;
+
+        while (FileSystemItem::where('parent_id', $folder_id)
+            ->where('owner_id', auth()->id())
+            ->where('type', 'file')
+            ->where('name', $name)
+            ->exists()
+        ) {
+            $name = $baseName . " ($counter)" . ($extension ? ".$extension" : '');
+            $counter++;
+        }
+
+        return $name;
+    }
+
     public function upload_client_media(Request $request)
     {
 
