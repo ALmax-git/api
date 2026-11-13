@@ -28,7 +28,7 @@ class RealtorController extends Controller
     public function upload_client_media(Request $request)
     {
 
-        Log::info('po', [$request]);
+        Log::info('po', [$request->all()]);
         $request->validate([
             'files' => 'required|array',
             'files.*' => 'required|image|max:6024',
