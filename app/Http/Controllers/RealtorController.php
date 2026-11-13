@@ -25,7 +25,7 @@ use function Illuminate\Log\log;
 class RealtorController extends Controller
 {
 
-    public function upload_product_media(Request $request)
+    public function upload_client_media(Request $request)
     {
 
         Log::info('po', [$request]);
