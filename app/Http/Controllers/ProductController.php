@@ -475,11 +475,7 @@ class ProductController extends Controller
                 $query->orWhere('client_id', null);
             })->where('status', 'active')->orderBy('title')->get();
         // $categories = $categories->map(function ($category) {
-        //     if (($category->id)) {
-        //         $category->id = make_uuid($category->id, 'product_category');
-        //     }
-        //     return $category;
-        // });
+
         return response()->json(
             [
                 'success' => true,
