@@ -16,7 +16,290 @@ use function Illuminate\Log\log;
 
 class SalesController extends Controller
 {
+    public function load_procurement(Request $request)
+    {
+        $user = $request->user();
 
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+
+        $client = $user->client;
+
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Client profile not found.',
+            ], 404);
+        }
+
+        $stocks = \App\Models\Stock::query()
+            ->where('client_id', $client->id)
+            ->with([
+                'entries',
+                'entries.product',
+                'entries.product.category',
+                'supplier',
+                'creator',
+                'client',
+            ])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $stocks->map(function ($stock) {
+                return [
+                    'id' => make_uuid($stock->id, 'stock'),
+                    'uuid' => '#' . make_uuid($stock->id, 'stock'),
+                    'label' => $stock->label,
+                    'title' => $stock->title,
+                    'invoice_number' => $stock->invoice_number,
+                    'note' => $stock->note,
+                    'internal_note' => $stock->internal_note,
+                    'other_fees' => (float) ($stock->other_fees ?? 0),
+                    'total_amount' => (float) ($stock->total_amount ?? 0),
+                    'paid_amount' => (float) ($stock->paid_amount ?? 0),
+                    'order_date' => $stock->order_date,
+                    'expected_date' => $stock->expected_date,
+                    'products_count' => (int) ($stock->products_count ?? ($stock->entries?->count() ?? 0)),
+                    'status' => $stock->status,
+                    'client_id' => $stock->client_id ? make_uuid($stock->client_id, 'client') : null,
+                    'supplier_id' => $stock->supplier_id ? make_uuid($stock->supplier_id, 'supplier') : null,
+                    'created_by_id' => $stock->created_by_id ? make_uuid($stock->created_by_id, 'user') : null,
+                    'created_at' => $stock->created_at,
+                    'updated_at' => $stock->updated_at,
+                    'client' => $stock->client ? [
+                        'id' => make_uuid($stock->client->id, 'client'),
+                        'uuid' => '#' . make_uuid($stock->client->id, 'client'),
+                        'name' => $stock->client->name,
+                        'email' => $stock->client->email,
+                        'phone_number' => $stock->client->phone_number,
+                    ] : null,
+                    'supplier' => $stock->supplier ? [
+                        'id' => make_uuid($stock->supplier->id, 'supplier'),
+                        'uuid' => '#' . make_uuid($stock->supplier->id, 'supplier'),
+                        'name' => $stock->supplier->name,
+                        'email' => $stock->supplier->email,
+                        'phone_number' => $stock->supplier->phone_number,
+                    ] : null,
+                    'created_by' => $stock->creator ? [
+                        'id' => make_uuid($stock->creator->id, 'user'),
+                        'uuid' => '#' . make_uuid($stock->creator->id, 'user'),
+                        'name' => $stock->creator->name,
+                        'email' => $stock->creator->email,
+                        'username' => $stock->creator->username,
+                    ] : null,
+                    'entries' => $stock->entries?->map(function ($entry) {
+                        return [
+                            'id' => make_uuid($entry->id, 'stock_entry'),
+                            'uuid' => '#' . make_uuid($entry->id, 'stock_entry'),
+                            'stock_id' => $entry->stock_id ? make_uuid($entry->stock_id, 'stock') : null,
+                            'product_id' => $entry->product_id ? make_uuid($entry->product_id, 'product') : null,
+                            'variant_id' => $entry->variant_id ? make_uuid($entry->variant_id, 'variant') : null,
+                            'client_id' => $entry->client_id ? make_uuid($entry->client_id, 'client') : null,
+                            'created_by_id' => $entry->created_by_id ? make_uuid($entry->created_by_id, 'user') : null,
+                            'quantity' => (float) ($entry->quantity ?? 0),
+                            'quantity_recieved' => (float) ($entry->quantity_recieved ?? 0),
+                            'quantity_damage' => (float) ($entry->quantity_damage ?? 0),
+                            'unit_cost_price' => (float) ($entry->unit_cost_price ?? 0),
+                            'sale_price' => (float) ($entry->sale_price ?? 0),
+                            'status' => $entry->status,
+                            'batch_number' => $entry->batch_number,
+                            'expire_date' => $entry->expire_date,
+                            'production_date' => $entry->production_date,
+                            'note' => $entry->note,
+                            'product' => $entry->product ? [
+                                'id' => make_uuid($entry->product->id, 'product'),
+                                'uuid' => '#' . make_uuid($entry->product->id, 'product'),
+                                'name' => $entry->product->name,
+                                'brand' => $entry->product->brand,
+                                'sale_price' => $entry->product->sale_price,
+                                'available_stock' => $entry->product->available_stock,
+                                'category' => $entry->product->category ? $entry->product->category->title : null,
+                            ] : null,
+                            'created_at' => $entry->created_at,
+                            'updated_at' => $entry->updated_at,
+                        ];
+                    })->values(),
+                ];
+            })->values(),
+        ]);
+    }
+
+    public function new_procurement(Request $request)
+    {
+
+        try {
+            $data = $request->validate([
+                'title' => ['required', 'string', 'max:255'],
+                'client_id' => ['nullable', 'string'],
+                'supplier_id' => ['nullable', 'string'],
+                'created_by_id' => ['nullable', 'string'],
+                'invoice_number' => ['nullable', 'string', 'max:255'],
+                'note' => ['nullable', 'string'],
+                'internal_note' => ['nullable', 'string'],
+                'other_fees' => ['nullable', 'numeric', 'min:0'],
+                'total_amount' => ['required', 'numeric', 'min:0'],
+                'paid_amount' => ['nullable', 'numeric', 'min:0'],
+                'order_date' => ['nullable', 'date'],
+                'expected_date' => ['nullable', 'date'],
+                'products_count' => ['nullable', 'integer', 'min:0'],
+                'entries' => ['required', 'array', 'min:1'],
+                'entries.*.product_id' => ['required', 'string'],
+                'entries.*.quantity' => ['required', 'numeric', 'min:0'],
+                'entries.*.unit_cost_price' => ['nullable', 'numeric', 'min:0'],
+                'entries.*.sale_price' => ['nullable', 'numeric', 'min:0'],
+                'entries.*.status' => ['nullable', 'string', 'max:255'],
+                'entries.*.batch_number' => ['nullable', 'string', 'max:255'],
+                'entries.*.expire_date' => ['nullable', 'date'],
+                'entries.*.production_date' => ['nullable', 'date'],
+                'entries.*.note' => ['nullable', 'string'],
+            ]);
+
+            $user = $request->user();
+            $createdById = $data['created_by_id'] ?? ($user?->id ?? null);
+            $clientId = $data['client_id'] ?? ($user?->client_id ?? null);
+            $supplierId = $data['supplier_id'] ?? null;
+
+            DB::beginTransaction();
+
+            $procurementPayload = [
+                'title' => $data['title'],
+                'label' => $data['title'],
+                'created_by_id' => $user->id,
+                'client_id' => $user->client->id,
+                'supplier_id' => $supplierId ? get_id($supplierId, 'supplier') : null,
+                'invoice_number' => $data['invoice_number'] ?? null,
+                'note' => $data['note'] ?? null,
+                'internal_note' => $data['internal_note'] ?? null,
+                'other_fees' => $data['other_fees'] ?? 0,
+                'total_amount' => $data['total_amount'],
+                'paid_amount' => $data['paid_amount'] ?? 0,
+                'order_date' => $data['order_date'] ?? now()->toDateString(),
+                'expected_date' => $data['expected_date'] ?? null,
+                'products_count' => $data['products_count'] ?? count($data['entries']),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            $procurementId = null;
+
+            if (class_exists('\App\\Models\\Stock')) {
+                $procurement = new \App\Models\Stock();
+                foreach ($procurementPayload as $key => $value) {
+                    $procurement->{$key} = $value;
+                }
+                $procurement->save();
+                $procurementId = $procurement->id;
+            } else {
+                $procurementId = DB::table('stocks')->insertGetId($procurementPayload);
+            }
+
+            foreach ($data['entries'] as $entry) {
+                $entryPayload = [
+                    'stock_id' => $procurementId,
+                    'product_id' => $entry['product_id'] ? get_id($entry['product_id'], 'product') : null,
+                    'variant_id' => !empty($entry['variant_id']) ? get_id($entry['variant_id'], 'variant') : null,
+                    // 'stock_id' => !empty($entry['stock_id']) ? get_id($entry['stock_id'], 'stock') : null,
+                    'quantity' => $entry['quantity'] ?? 0,
+                    'quantity_recieved' => $entry['quantity_recieved'] ?? 0,
+                    'quantity_damage' => $entry['quantity_damage'] ?? 0,
+                    'unit_cost_price' => $entry['unit_cost_price'] ?? 0,
+                    'sale_price' => $entry['sale_price'] ?? 0,
+                    'status' => $entry['status'] ?? 'pending',
+                    'note' => $entry['note'] ?? null,
+                    'batch_number' => $entry['batch_number'] ?? null,
+                    'expire_date' => $entry['expire_date'] ?? null,
+                    'production_date' => $entry['production_date'] ?? null,
+                    'client_id' => $user->client->id,
+                    'created_by_id' => $user->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                if (class_exists('\App\\Models\\StockEntry')) {
+                    $item = new \App\Models\StockEntry();
+                    foreach ($entryPayload as $key => $value) {
+                        $item->{$key} = $value;
+                    }
+                    $item->save();
+
+                    if (!empty($entryPayload['product_id'])) {
+                        $product = \App\Models\Product::find($entryPayload['product_id']);
+                        if ($product) {
+                            $receivedQuantity = (float) ($entry['quantity'] ?? 0);
+
+                            if (isset($product->available_quantity) || array_key_exists('available_quantity', $product->getAttributes())) {
+                                $product->available_quantity = (float) ($product->available_quantity ?? 0) + $receivedQuantity;
+                            }
+
+                            if (isset($product->available_stock) || array_key_exists('available_stock', $product->getAttributes())) {
+                                $product->available_stock = (float) ($product->available_stock ?? 0) + $receivedQuantity;
+                            }
+
+                            if (isset($product->quantity) || array_key_exists('quantity', $product->getAttributes())) {
+                                $product->quantity = (float) ($product->quantity ?? 0) + $receivedQuantity;
+                            }
+
+                            $product->save();
+                        }
+                    }
+                } else {
+                    DB::table('stock_entries')->insert($entryPayload);
+
+                    if (!empty($entryPayload['product_id'])) {
+                        $product = \App\Models\Product::find($entryPayload['product_id']);
+                        if ($product) {
+                            $receivedQuantity = (float) ($entry['quantity'] ?? 0);
+
+                            if (isset($product->available_quantity) || array_key_exists('available_quantity', $product->getAttributes())) {
+                                $product->available_quantity = (float) ($product->available_quantity ?? 0) + $receivedQuantity;
+                            }
+
+                            if (isset($product->available_stock) || array_key_exists('available_stock', $product->getAttributes())) {
+                                $product->available_stock = (float) ($product->available_stock ?? 0) + $receivedQuantity;
+                            }
+
+                            if (isset($product->quantity) || array_key_exists('quantity', $product->getAttributes())) {
+                                $product->quantity = (float) ($product->quantity ?? 0) + $receivedQuantity;
+                            }
+
+                            $product->save();
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Procurement saved successfully.',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first(),
+            ], 422);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            Log::error('procure_error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'payload' => $request->all(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save procurement.',
+            ], 500);
+        }
+    }
     public function store_sales(Request $request, string $uuid)
     {
 

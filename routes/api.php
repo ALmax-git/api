@@ -42,6 +42,8 @@ Route::prefix('v1/')->group(function () {
         Route::post('products/delete/{uuid}', [ProductController::class, 'delete_product']);
 
         Route::post('client/store/sales/{uuid}/all', [SalesController::class, 'store_sales']);
+        Route::post('client/store/procurement/new', [SalesController::class, 'new_procurement']);
+        Route::post('client/store/procurement/load', [SalesController::class, 'load_procurement']);
         Route::post('client/staffs/{uuid}/all', [AccountsController::class, 'store_staffs']);
 
         Route::post('client/store/{uuid}/devices/create', [BotNetController::class, 'create_device']);
