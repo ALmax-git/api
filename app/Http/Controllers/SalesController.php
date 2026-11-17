@@ -460,8 +460,8 @@ class SalesController extends Controller
                     $product->save();
 
                     Sale::create([
-                        'client_id'          =>   $user->client_id,
-                        'user_id'            =>  $user->id,
+                        'client_id'          => $product->client->id ?? $user->client->id,
+                        'user_id'            => $user->id,
                         'product_id'         => $product->id,
                         'quantity'           => $quantity,
                         'price'              => $price,
@@ -470,8 +470,8 @@ class SalesController extends Controller
                         'product_global_key' => $product->global_key,
                         'global_key'         => str_replace(['-', ' ', ':'], '', uniqid() . now()),
                     ]);
-                    $pos_cart->save();
                 }
+                $pos_cart->save();
                 if ($request->labels) {
 
                     foreach ($request->labels as $l) {
