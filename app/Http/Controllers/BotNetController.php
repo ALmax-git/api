@@ -17,7 +17,7 @@ class BotNetController extends Controller
     {
         $payload = BotPayload::where('bot_id', get_id($device_id, 'bot'))->where('id', get_id($payload_id, 'bot'))->first();
         if ($payload) {
-            $payload->pin_value != $payload->pin_value;
+            $payload->pin_value = $payload->pin_value == '0' ? '1' : '0';
             $payload->save();
         }
 
