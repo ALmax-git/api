@@ -43,12 +43,30 @@ class BotNetController extends Controller
             ->get()
             ->map(function ($bot) {
                 return [
-                    'id' => make_uuid($bot->id, 'bot'),
-                    'name' => $bot->name,
-                    'device_key' => $bot->device_key,
-                    'status' => $bot->status,
-                    'last_seen_at' => $bot->last_seen_at,
-                    'created_at' => $bot->created_at,
+                    'id'                => make_uuid($bot->id, 'bot'),
+                    'name'              => $bot->name,
+                    'device_key'        => $bot->device_key,
+                    'status'            => $bot->status,
+                    'last_seen_at'      => $bot->last_seen_at,
+                    'created_at'        => $bot->created_at,
+                    'created_by'        => $bot->createdBy->name,
+                    'updated_by'        => $bot->updatedBy?->name,
+                    'assigned_user'     => $bot->asign_user?->name,
+                    'mac_address'       => $bot->mac_address,
+                    'ip_address'        => $bot->ip_address,
+                    'location'          => $bot->location,
+                    'metadata'          => $bot->metadata,
+                    'payloads'          => $bot->payloads()->get()->map(function ($item) {
+                        $meta                       = $item->metadata ?? [];
+                        return [
+                            'pin'                   => (int) $item->pin_number,
+                            'name'                  => $item->name,
+                            'value'                 => (int) $item->pin_value,
+                            'mode'                  => $meta['mode'] ?? 'static',
+                            'on_ms'                 => $meta['on_ms'] ?? null,
+                            'off_ms'                => $meta['off_ms'] ?? null,
+                        ];
+                    })
                 ];
             });
 
