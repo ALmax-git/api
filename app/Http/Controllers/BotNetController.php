@@ -24,8 +24,12 @@ class BotNetController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Updated.',
+            'data' => [
+                'bot' => get_id($device_id, 'bot'),
+                'payload_id' => $payload_id,
+            ],
             'payload' => [
-                'value'     => $payload->pin_value,
+                'value'     => true, //$payload->pin_value,
                 'mode'  => 'static'
             ]
         ], 401);
