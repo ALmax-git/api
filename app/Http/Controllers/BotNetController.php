@@ -24,6 +24,10 @@ class BotNetController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Updated.',
+            'payload' => [
+                'value'     => $payload->pin_value,
+                'mode'  => 'static'
+            ]
         ], 401);
     }
     public function store_devices(Request $request, string $uuid): JsonResponse
