@@ -60,6 +60,8 @@ Route::prefix('v1/')->group(function () {
 
         Route::post('client/store/{uuid}/devices/create', [BotNetController::class, 'create_device']);
         Route::post('client/store/{uuid}/devices/all', [BotNetController::class, 'store_devices']);
+        Route::post('client/store/devices/toggle/{device_id}/{payload_id}', [BotNetController::class, 'toggle_payload']);
+
 
         Route::get('auth/verify', [AuthController::class, 'verifyToken']); // Quick ping for X-POS connection checks
         Route::get('auth/devices', [AuthController::class, 'activeDevices']);

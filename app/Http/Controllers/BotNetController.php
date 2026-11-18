@@ -7,11 +7,25 @@ use Illuminate\Http\Request;
 use App\Models\Bot;
 use App\Models\BotCommand;
 use App\Models\BotEvent;
+use App\Models\BotPayload;
 use App\Models\Client;
 use Illuminate\Http\JsonResponse;
 
 class BotNetController extends Controller
 {
+    public function toggle_payload(Request $request, string $device_id, string $payload_id)
+    {
+        $payload = BotPayload::where('bot_id', get_id($device_id))->where('id', $payload_id)->first();
+        if ($payload) {
+            $payload->pin_value != $payload->pin_value;
+            $$payload->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Updated.',
+        ], 401);
+    }
     public function store_devices(Request $request, string $uuid): JsonResponse
     {
         $user = $request->user();
@@ -59,6 +73,7 @@ class BotNetController extends Controller
                     'payloads'          => $bot->payloads()->get()->map(function ($item) {
                         $meta                       = $item->metadata ?? [];
                         return [
+                            'id'                    => $item->id,
                             'pin'                   => (int) $item->pin_number,
                             'name'                  => $item->name,
                             'value'                 => (int) $item->pin_value,
