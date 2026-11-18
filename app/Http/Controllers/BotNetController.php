@@ -15,7 +15,7 @@ class BotNetController extends Controller
 {
     public function toggle_payload(Request $request, string $device_id, string $payload_id)
     {
-        $payload = BotPayload::where('bot_id', get_id($device_id))->where('id', $payload_id)->first();
+        $payload = BotPayload::where('bot_id', get_id($device_id, 'bot'))->where('id', $payload_id)->first();
         if ($payload) {
             $payload->pin_value != $payload->pin_value;
             $$payload->save();
