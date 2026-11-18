@@ -15,7 +15,7 @@ class BotNetController extends Controller
 {
     public function toggle_payload(Request $request, string $device_id, string $payload_id)
     {
-        $payload = BotPayload::where('bot_id', get_id($device_id, 'bot'))->where('id', $payload_id)->first();
+        $payload = BotPayload::where('bot_id', get_id($device_id, 'bot'))->where('id', get_id($payload_id, 'bot'))->first();
         if ($payload) {
             $payload->pin_value != $payload->pin_value;
             $$payload->save();
@@ -24,15 +24,11 @@ class BotNetController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Updated.',
-            'data' => [
-                'bot' => get_id($device_id, 'bot'),
-                'payload_id' => $payload_id,
-            ],
             'payload' => [
-                'value'     => true, //$payload->pin_value,
+                'value'     => $payload->pin_value,
                 'mode'  => 'static'
             ]
-        ], 401);
+        ], 200);
     }
     public function store_devices(Request $request, string $uuid): JsonResponse
     {
@@ -81,7 +77,7 @@ class BotNetController extends Controller
                     'payloads'          => $bot->payloads()->get()->map(function ($item) {
                         $meta                       = $item->metadata ?? [];
                         return [
-                            'id'                    => $item->id,
+                            'uuid'                  => make_uuid($item->id, 'bot'),
                             'pin'                   => (int) $item->pin_number,
                             'name'                  => $item->name,
                             'value'                 => (int) $item->pin_value,
