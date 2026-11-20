@@ -25,7 +25,7 @@ class BotNetController extends Controller
             'success' => true,
             'message' => 'Updated.',
             'payload' => [
-                'value'     => $payload->pin_number  < 10 ? ($payload->pin_value == '0' ? '1' : '0') : $payload->pin_value,
+                'value'     => $payload->pin_number  < 8 ? ($payload->pin_value == '0' ? '1' : '0') : $payload->pin_value,
                 'mode'  => 'static'
             ]
         ], 200);
@@ -80,7 +80,7 @@ class BotNetController extends Controller
                             'uuid'                  => make_uuid($item->id, 'bot'),
                             'pin'                   => (int) $item->pin_number,
                             'name'                  => $item->name,
-                            'value'                 => (int) ($item->pin_number  < 9 ? ($item->pin_value == '0' ? '1' : '0') : $item->pin_value),
+                            'value'                 => (int) ($item->pin_number  < 8 ? ($item->pin_value == '0' ? '1' : '0') : $item->pin_value),
                             'mode'                  => $meta['mode'] ?? 'static',
                             'on_ms'                 => $meta['on_ms'] ?? null,
                             'off_ms'                => $meta['off_ms'] ?? null,
