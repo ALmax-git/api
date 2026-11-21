@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ClientStatus;
 use App\Enums\UserStatus;
 use App\Models\Client;
+use App\Models\Follower;
 use App\Models\User;
 use App\Models\UserClient;
 use Illuminate\Http\Request;
@@ -17,6 +18,68 @@ use Symfony\Polyfill\Uuid\Uuid;
 
 class AccountsController extends Controller
 {
+    public function resoleve_profile(Request $request)
+    {
+
+        $request->validate([
+            'x' => 'required|string',
+            'org' => 'nullable|string',
+        ]);
+
+        $user_id = get_id($request->x, 'user');
+        if (!$user_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have access to the requested resource.',
+            ], 403);
+        }
+        $user = User::find($user_id);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have access to the requested resource.',
+            ], 403);
+        }
+
+        $network = [];
+        $_orgs = UserClient::where('user_id', $user->id)->where('is_staff', true)->get();
+        foreach ($_orgs as $org) {
+            $network[] = [
+                'name' => $org->client->name,
+                'logo' => $org->client->logo,
+                'lead' => $org->client->owner->name,
+                'rc_number' => $org->client->rc_number
+            ];
+        }
+
+        $network_size = Follower::where('user_id', $user->id)->orWhere('target_id', $user_id)->count();
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id'            => make_uuid($user->id, 'user'),
+                'uuid'          => make_uuid($user->id, 'user'),
+                'name'          => $user->name,
+                'username'      => $user->username,
+                'email'         => $user->email,
+                'first_name'    => $user->first_name,
+                'surname'       => $user->surname,
+                'last_name'     => $user->last_name,
+                'phone_number'  => $user->phone_number,
+                'country'       => $user->country?->name,
+                'state'         => $user->state?->name,
+                'city'          => $user->city?->name,
+                'bio'           => $user->bio,
+                'profile_photo_url' => $user->profile_photo_url ?? 'default.png',
+                'language'      => $user->language,
+                'gender'        => $user->gender,
+                'address'       => $user->address,
+                'status'        => $user->status,
+                'trust_score'   => $user->trust_score ?? 0,
+                'connections'   => $network_size ?? 0,
+                'network'       => $network,
+            ],
+        ], 200);
+    }
 
     public function store_staffs(Request $request, string $uuid)
     {

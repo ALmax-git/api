@@ -20,6 +20,7 @@ use App\Models\Todo;
 
 class ResolveController extends Controller
 {
+    
     public function contract(Request $request, string $contract): Mixed
     {
         $uuid = $contract;

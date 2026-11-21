@@ -246,7 +246,7 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'user' => [
-                'id'            => make_uuid($user->id),
+                'id'            => make_uuid($user->id, 'user'),
                 'uuid'          => make_uuid($user->id, 'user'),
                 'client_id'     => make_uuid($user->client_id, 'client'),
                 'name'          => $user->name,
