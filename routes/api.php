@@ -37,7 +37,7 @@ Route::prefix('v1/')->group(function () {
         Route::post('auth/register', [AuthController::class, 'register_user'])->withoutMiddleware(EnsureTokenIsValid::class);
         Route::post('engine/resolve', [AuthController::class, 'resolve']);
         Route::POST('auth/register-device', [AuthController::class, 'register_device']);
-        Route::POST('device/email/activate/{device_key}', [AuthController::class, 'email_device_activation']);
+        Route::get('device/email/activate/{device_key}', [AuthController::class, 'email_device_activation']);
         Route::POST('auth/device-activation', [AuthController::class, 'device_activation']);
         Route::post('client/store/{uuid}/devices/safecode', [BotNetController::class, 'store_find_bot']);
         Route::post('resolve/profile', [AccountsController::class, 'resoleve_profile']);
