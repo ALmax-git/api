@@ -111,6 +111,7 @@ class AuthController extends Controller
                     'preferences'           => $user->preferences,
                     'timezone'              => $user->timezone,
                     'trust_score'           => $user->trust_score ?? 0,
+                    'has_pin'       => $user->pin ? true : false,
                     'wallet'        => [
                         'uuid'              => make_uuid($user->wallet?->id, 'wallet'),
                         'label'             => $user->wallet?->label ?? null,
@@ -573,6 +574,7 @@ class AuthController extends Controller
                 'preferences'   => $user->preferences,
                 'timezone'      => $user->timezone,
                 'trust_score'   => $user->trust_score ?? 0,
+                'has_pin'       => $user->pin ? true : false,
                 'wallet'        => [
                     'uuid'              => make_uuid($user->wallet?->id, 'wallet'),
                     'label'             => $user->wallet?->label ?? null,
@@ -818,6 +820,7 @@ class AuthController extends Controller
                         'preferences'           => $user->preferences,
                         'timezone'              => $user->timezone,
                         'trust_score'           => $user->trust_score ?? 0,
+                        'has_pin'               => $user->pin ? true : false,
                         'wallet'        => [
                             'uuid'              => make_uuid($user->wallet?->id, 'wallet'),
                             'label'             => $user->wallet?->label ?? null,

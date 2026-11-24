@@ -40,7 +40,7 @@ Route::prefix('v1/')->group(function () {
         Route::POST('device/email/activate/{device_key}', [AuthController::class, 'email_device_activation']);
         Route::POST('auth/device-activation', [AuthController::class, 'device_activation']);
         Route::post('client/store/{uuid}/devices/safecode', [BotNetController::class, 'store_find_bot']);
-        Route::post('resolve/user/profile', [AccountsController::class, 'resoleve_profile']);
+        Route::post('resolve/profile', [AccountsController::class, 'resoleve_profile']);
         Route::post('resolve/client/profile', [AccountsController::class, 'resoleve_client_profile']);
     });
 
