@@ -23,8 +23,10 @@ use Flutterwave\Flutterwave;
 use Flutterwave\Library\Modal;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -260,7 +262,7 @@ if (!function_exists('user_access')) {
             return [];
         }
         $permissions                        = [];
-        foreach ($user->roles as $role) {
+        foreach ($user->roles ?? [] as $role) {
             $role_permissions               = $role->permissions;
             foreach ($role_permissions as $permission) {
                 $permissions[]              = $permission->label;
@@ -384,6 +386,63 @@ if (!function_exists('can_use')) {
         return check_if(client_access(), $access);
     }
 }
+if (!function_exists('send_otp')) {
+
+    function send_otp(User $user)
+    {
+        if (!$user || !$user->email) {
+            return false;
+        }
+
+        $key = "user_otp:{$user->id}";
+        $cooldown = "{$key}:cooldown";
+
+        // Prevent repeated email requests.
+        if (Cache::has($cooldown)) {
+            return false;
+        }
+
+        // Reuse an existing valid OTP.
+        if (!Cache::has($key)) {
+            $otp = (string) random_int(100000, 999999);
+
+            Cache::put(
+                $key,
+                Hash::make($otp),
+                now()->addMinutes(5)
+            );
+        } else {
+            return false;
+        }
+
+        // Set cooldown before sending.
+        Cache::put($cooldown, true, now()->addSeconds(60));
+
+        $content = "
+        <div style='font-family:Arial,sans-serif'>
+            <h2>Verification Code</h2>
+            <p>Your Core-X verification code is:</p>
+            <h1 style='letter-spacing:8px'>{$otp}</h1>
+            <p>This code expires in 5 minutes.</p>
+            <small>Powered by ALmax Cloud</small>
+        </div>
+    ";
+
+        $sent = email(
+            $user->email,
+            $content,
+            'Your Core-X Verification Code'
+        );
+
+        if (!$sent) {
+            Cache::forget($key);
+            Cache::forget($cooldown);
+            return false;
+        }
+
+        return true;
+    }
+}
 
 if (!function_exists('email')) {
     /**
@@ -392,16 +451,17 @@ if (!function_exists('email')) {
      * @param array|string $emails
      * @param string $content HTML or plain content
      * @param string|null $subject
-     * @return void
+     * @return bool
      */
-    function email($emails, $content, $subject = 'ALmax Notification')
+    function email($emails, $content, $subject = 'ALmax Notification'): bool
     {
         $emails = Arr::wrap($emails);
 
-        Mail::send([], [], function ($message) use ($emails, $content, $subject) {
-            $message->to($emails)->subject($subject);
+        try {
+            Mail::send([], [], function ($message) use ($emails, $content, $subject) {
+                $message->to($emails)->subject($subject);
 
-            $html = <<<HTML
+                $html = <<<HTML
                         <div style="width: 90%; margin: auto; font-family: Arial, sans-serif; background-color: #001; color: #e6e6ef; padding: 20px; border-radius: 10px; border: 1px solid #0d1117;">
                             <div style="display: flex; gap: 8px; margin-bottom: 15px;">
                                 <span style="width: 12px; height: 12px; border-radius: 50%; background-color: #ff5f57;"></span>
@@ -415,8 +475,12 @@ if (!function_exists('email')) {
                         </div>
                     HTML;
 
-            $message->html($html, 'text/html');
-        });
+                $message->html($html, 'text/html');
+            });
+            return true;
+        } catch (\Throwable $th) {
+            return false;
+        }
     }
 }
 

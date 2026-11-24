@@ -6,6 +6,8 @@ use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
 use App\Enums\WalletAssetStatus;
 use App\Models\Asset;
+use App\Models\Client;
+use App\Models\Journal;
 use App\Models\Transaction;
 use App\Models\TransactionHistory;
 use App\Models\Wallet;
@@ -22,6 +24,87 @@ class FundController extends Controller
     private string                              $opay_secret_key;
     private string                              $opay_merchant_id;
     private string                              $opay_status_url;
+
+    public function journals_all(Request $request, string $uuid)
+    {
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.',
+            ], 401);
+        }
+        $client = Client::find(get_id($uuid, 'client'));
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Store not found.' . $uuid
+
+            ], 404);
+        }
+        if ($client->id != $user->client_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not autheorized.',
+            ], 492);
+        }
+
+        $journal_type = 'client';
+
+        $journals =  Journal::query()
+            ->with(['client', 'user', 'entries'])
+            ->when($journal_type === 'client', function ($query) {
+                $query->where('client_id', Auth::user()->client->id);
+            })
+            ->when($journal_type === 'personal', function ($query) {
+                $query->where('user_id', auth()->id())->where('client_id', null);
+            })
+            ->latest('date')
+            ->orderBy('title')
+            ->orderBy('created_at')
+            ->get();
+
+
+        return response()->json(
+            [
+                'success' => true,
+                'journals' => $journals->map(
+                    fn($journal) => [
+                        'id'        => make_uuid($journal->id, 'journal'),
+                        'title'     => $journal->title,
+                        'note'      => $journal->note,
+                        'date'      => $journal->date,
+                        'entries'   => $journal->entries->map(
+                            fn($entry) => [
+                                'user_id',
+                                'label'                 => $entry->label,
+                                'currency'              => $entry->currency,
+                                'amount'                => $entry->amount,
+                                'type'                  => $entry->type,
+                                'date'                  => $entry->date,
+                                'tx_ref'                => $entry->tx_ref,
+                                'tx_method'             => $entry->tx_method,
+                                'is_adjustment'         => $entry->is_adjustment,
+                                'is_verified'           => $entry->is_verified,
+                                'journal_entry_id'      => $entry->journal_entry_id,
+                                'amend_by'              => $entry->amend_by?->name ?? '',
+                                'verified_by'           => $entry->verified_by?->name,
+                                'has_amendment'         => (bool) $entry->has_amendment,
+                                'amendment_at'          => $entry->amendment_at,
+                                'verified_at'           => $entry->verified_at,
+                                'amendment_reason'      => $entry->amendment_reason,
+                                'files'                 => $entry->entryFiles->map(fn($file_system_item) => [
+                                    'file'              => $file_system_item->storage_path
+                                ])
+                            ]
+                        )
+                    ]
+                )
+            ]
+        );
+    }
 
     public function __construct()
     {
@@ -253,7 +336,7 @@ class FundController extends Controller
         }
 
         try {
-            $controller = flutterwave_payment();
+            // $controller = flutterwave_payment();
             $tx_ref     = generate_tx_ref();
             // dd($controller);
 
@@ -289,7 +372,7 @@ class FundController extends Controller
                 ]);
             });
 
-            $controller->process($data);
+            // $controller->process($data);
         } catch (\Throwable $e) {
             Log::error('Payment processing init trace exception: ' . $e->getMessage());
             abort(500, "An error occurred during the execution steps.");

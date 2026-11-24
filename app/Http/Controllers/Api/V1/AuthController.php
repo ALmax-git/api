@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Fortify\PasswordValidationRules;
 use App\Enums\BotStatus;
 use App\Enums\BranchStatus;
 use App\Enums\FacilityStatus;
@@ -14,19 +15,323 @@ use App\Models\Branch;
 use App\Models\Client;
 use App\Models\Domain;
 use App\Models\Facility;
+use App\Models\Team;
 use App\Models\User;
+use App\Models\UserClient;
 use App\Models\XApp;
 use App\Models\XAppAuth;
 use App\Models\XDeveloper;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Laravel\Jetstream\Jetstream;
 
 class AuthController extends Controller
 {
+
+    use PasswordValidationRules;
+    public function register_user(Request $request)
+    {
+        $request->validate(
+            [
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+                'apply' => ['nullable', 'string'],
+                'password' => $this->passwordRules(),
+                'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
+            ]
+        );
+
+
+        $xnamespace = $request->header('Xsource');
+        $xapp = XApp::where('name', $xnamespace)->first();
+
+        if (!$xapp) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid namespace.',
+                'data' => ['xnamespace' => $xnamespace],
+            ], 419);
+        }
+
+        $xsource = $request->header('xsource');
+        $client = get_client_namespace($xsource);
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid namespace.',
+                'data' => ['xnamespace' => $xsource],
+            ], 419);
+        }
+
+        $user = User::create(
+            [
+                'username'      => uniqid('alx_'),
+                'name'          => $request->name,
+                'email'         => $request->email,
+                'password'      => Hash::make($request->password),
+                'client_id'     => $client->id
+            ]
+        );
+        // return tap($user, function (User $user) {
+        $this->createTeam($user);
+        // });
+        $abilities = user_access();
+
+        $token = $user->createToken($xapp->tagline ?? $xapp->name, $abilities);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Authentication successful.',
+            'data' => [
+                'user' => [
+                    'id'                    => make_uuid($user->id, 'user'),
+                    'client_id'             => make_uuid($user->client_id, 'client'),
+                    'name'                  => $user->name,
+                    'username'              => $user->username,
+                    'email'                 => $user->email,
+                    'first_name'            => $user->first_name,
+                    'surname'               => $user->surname,
+                    'last_name'             => $user->last_name,
+                    'phone_number'          => $user->phone_number,
+                    'country'               => $user->country?->name,
+                    'state'                 => $user->state?->name,
+                    'city'                  => $user->city?->name,
+                    'bio'                   => $user->bio,
+                    'profile_photo_url'     => $user->profile_photo_url ?? 'https://api.dicebear.com/10.x/planets/svg?seed=happy',
+                    'language'              => $user->language,
+                    'gender'                => $user->gender,
+                    'address'               => $user->address,
+                    'date_of_birth'         => $user->date_of_birth,
+                    'status'                => $user->status,
+                    'preferences'           => $user->preferences,
+                    'timezone'              => $user->timezone,
+                    'trust_score'           => $user->trust_score ?? 0,
+                    'wallet'        => [
+                        'uuid'              => make_uuid($user->wallet?->id, 'wallet'),
+                        'label'             => $user->wallet?->label ?? null,
+                        'icon_url'          => $user->wallet?->icon_url ?? null,
+                        'address'           => $user->wallet?->address ?? null,
+                        'number'            => $user->wallet?->number ?? null,
+                        'locked_balance'    => $user->wallet?->locked_balance ?? 0,
+                        'balance'           => $user->wallet?->balance ?? 0,
+                        'available_balance' => $user->wallet?->available_balance ?? 0,
+                        'created_by'        => $user->wallet?->created_by ?? null,
+                        'provider'          => $user->wallet?->provider ?? 'com.almaxcloud.corex',
+                        'tag'               => $user->wallet?->tag ?? null,
+                        'metadata'          => $user->wallet?->metadata ?? null,
+                        'is_default'        => $user->wallet?->is_default ?? null,
+                        'is_active'         => $user->wallet?->is_active ?? null,
+                        'status'            => $user->wallet?->status ?? null,
+                        'last_balance_sync' => $user->wallet?->last_balance_sync ?? null,
+                        'activated_at'      => $user->wallet?->activated_at ?? null,
+                        'deactivated_at'    => $user->wallet?->deactivated_at ?? null,
+                        'account_number'    => $user->wallet?->account_number ?? null,
+                        'account_name'      => $user->wallet?->account_name ?? null,
+                        'bank_id'           => $user->wallet?->bank_id ?? null,
+                        'bank_name'         => $user->wallet?->bank?->name ?? null,
+                        'assets'            => $user->wallet?->assets->map(
+                            fn($asset) => [
+                                'balance'           => $asset->balance,
+                                'address'           => $asset->address,
+                                'locked_balance'    => $asset->locked_balance,
+                                'pending_balance'   => $asset->pending_balance,
+                                'status'            => $asset->status,
+                                'type'              => $asset->asset?->type,
+                                'icon_url'          => $asset->asset?->icon_url,
+                                'label'             => $asset->asset?->label,
+                                'symbol'            => $asset->asset?->symbol,
+                                'is_verified'       => $asset->asset?->is_verified,
+                                'value'             => $asset->asset?->value,
+                                'code'              => $asset->asset?->code,
+                                'description'       => $asset->asset?->description,
+                                'is_active'         => $asset->asset?->is_active,
+                                'withdrawal_fee'    => $asset->asset?->withdrawal_fee,
+                                'network_fee'       => $asset->asset?->network_fee,
+                            ]
+                        )
+                    ]
+                ],
+                'token' => $token->plainTextToken,
+                'token_type' => 'Bearer',
+                'user_access' => user_access($user->id),
+                'issued_at' => now()->toIso8601String(),
+            ],
+        ], 200);
+    }
+    /**
+     * Create a personal team for the user with default client.
+     */
+    protected function createTeam(User $user): void
+    {
+        $user->ownedTeams()->save(Team::forceCreate(
+            [
+                'user_id'           => $user->id,
+                'name'              => explode(' ', $user->name, 2)[0] . "'s Team",
+                'personal_team'     => true,
+            ]
+        ));
+
+        UserClient::create(
+            [
+                'user_id'           => $user->id,
+                'is_staff'          => false,
+                'client_id'         => $user->client_id,
+            ]
+        );
+    }
+
+    public function create_user_pin(Request $request)
+    {
+        $validated = $request->validate([
+            'pin'         => ['required', 'digits_between:4,6'],
+            'confirm_pin' => ['required', 'same:pin'],
+        ]);
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.'
+            ], 401);
+        }
+
+        $user->update([
+            'pin' => Hash::make($validated['pin']),
+        ]);
+
+        return response()->json([
+            'status'  => true,
+            'success' => true,
+            'message' => 'PIN created successfully.',
+        ]);
+    }
+
+    public function verify_user_pin(Request $request)
+    {
+        $validated = $request->validate([
+            'pin' => ['required', 'digits_between:4,6'],
+        ]);
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.'
+            ], 401);
+        }
+
+        if (!$user->pin || !Hash::check($validated['pin'], $user->pin)) {
+            return response()->json([
+                'status'  => false,
+                'success' => false,
+                'message' => 'Invalid PIN.',
+            ], 422);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'success' => true,
+            'message' => 'PIN verified successfully.',
+        ]);
+    }
+
+    public function verify_user_password(Request $request)
+    {
+        $validated = $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.'
+            ], 401);
+        }
+
+        if (!Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'status'  => false,
+                'success' => false,
+                'message' => 'Invalid password.',
+            ], 422);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'success' => true,
+            'message' => 'Password verified successfully.',
+        ]);
+    }
+
+    public function request_user_otp(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status'  => false,
+                'success' => false,
+                'message' => 'Unauthenticated.'
+            ], 401);
+        }
+        $is_send = send_otp($user);
+
+        if ($is_send) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Sent Successfull.'
+            ], 200);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something When Wrong.'
+            ], 401);
+        }
+    }
+    public function verify_user_otp(Request $request)
+    {
+        $validated = $request->validate([
+            'otp' => ['required', 'digits:6'],
+        ]);
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status'  => false,
+                'success' => false,
+                'message' => 'Unauthenticated.'
+            ], 401);
+        }
+
+        $key = "user_otp:{$user->id}";
+        $otp = Cache::get($key);
+
+        if (!$otp || !Hash::check($validated['otp'], $otp)) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Invalid or expired OTP.',
+            ], 422);
+        }
+
+        // OTP is single-use.
+        Cache::forget($key);
+
+        return response()->json([
+            'status'  => true,
+            'success' => true,
+            'message' => 'OTP verified successfully.',
+        ]);
+    }
 
     public function email_device_activation(Request $request,  string $device_key)
     {
@@ -137,7 +442,6 @@ class AuthController extends Controller
         $client = get_client_namespace($xapp->name);
         if (!$client || !$xapp) {
 
-            Log::info('eee', [$client, $xapp]);
             return response()->json([
                 'success' => false,
                 'message' => 'Client not found Invalid namespace.',
@@ -453,6 +757,10 @@ class AuthController extends Controller
      */
     public function login(Request $request): JsonResponse
     {
+        $request->validate([
+            'email'             => 'required|email',
+            'password'          => 'required|string|min:8',
+        ]);
         try {
             $xnamespace = $request->header('Xsource');
             $xapp = XApp::where('name', $xnamespace)->first();
@@ -467,27 +775,20 @@ class AuthController extends Controller
 
             $user = User::where('email', $request->email)->first();
 
-            $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|string|min:6',
-            ]);
 
             $passwordHash = $user?->password ?? $user?->pin ?? null;
             $isValidPassword = $user
                 && (
                     ($passwordHash && Hash::check($request->password, $passwordHash))
-                    // || ($user->pin && $user->pin === $request->password)
                 );
 
             if (! $user || ! $isValidPassword) {
                 throw ValidationException::withMessages([
-                    'email' => ['An Invalid credentials provided for Core-X authentication.'],
+                    'email' => ['An Invalid credentials provided for Core-X authentication...'],
                 ]);
             }
 
-            // Default abilities for POS terminals / frontend clients if none provided
-            $abilities = user_access();
-
+            $abilities = user_access($user->id);
             $token = $user->createToken($xapp->tagline ?? $xapp->name, $abilities);
 
             return response()->json([
@@ -508,7 +809,7 @@ class AuthController extends Controller
                         'state'                 => $user->state?->name,
                         'city'                  => $user->city?->name,
                         'bio'                   => $user->bio,
-                        'profile_photo_url' => $user->profile_photo_url ?? 'https://api.dicebear.com/10.x/planets/svg?seed=happy',
+                        'profile_photo_url'     => $user->profile_photo_url ?? 'https://api.dicebear.com/10.x/planets/svg?seed=happy',
                         'language'              => $user->language,
                         'gender'                => $user->gender,
                         'address'               => $user->address,
@@ -562,20 +863,20 @@ class AuthController extends Controller
                             )
                         ]
                     ],
-                    'token' => $token->plainTextToken,
-                    'token_type' => 'Bearer',
-                    'abilities' => $token->accessToken->abilities,
-                    'issued_at' => now()->toIso8601String(),
+                    'token'         => $token->plainTextToken,
+                    'token_type'    => 'Bearer',
+                    'user_access'   => user_access($user->id),
+                    'issued_at'     => now()->toIso8601String(),
                 ],
             ], 200);
         } catch (Exception $e) {
-            logger()->error('Validation failed during login', [
-                'errors' => $e->errors() ?? [],
-                'message' => $e->getMessage(),
-                'payload' => $request->all(),
+            Log::error('Validation failed during login', [
+                'errors'            => $e ?? [],
+                'message'           => $e->getMessage(),
+                'payload'           => $request->all(),
             ]);
             throw ValidationException::withMessages([
-                'email' => ['Invalid credentials provided for Core-X authentication.'],
+                'error'             => ['Invalid credentials provided for Core-X authentication..'],
             ]);
         }
     }
@@ -619,6 +920,7 @@ class AuthController extends Controller
                 'token' => $token->plainTextToken,
                 'token_type' => 'Bearer',
                 'abilities' => $token->accessToken->abilities,
+                'user_access' => user_access($user->id),
                 'issued_at' => now()->toIso8601String(),
             ],
         ], 200);

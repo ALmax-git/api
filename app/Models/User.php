@@ -368,7 +368,7 @@ class User extends Authenticatable
     {
         return UserClient::where('user_id', $this->id)
             ->where('is_staff', true)
-            ->where('client_id', Auth::user()->client->id)
+            ->where('client_id', $this->client_id)
             ->exists();
     }
 
@@ -467,12 +467,11 @@ class User extends Authenticatable
     {
         return $this->belongsTo(City::class, 'city_id');
     }
-
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'user_roles')
             ->where('roles.status', 'active')
-            ->where('user_roles.client_id', Auth::user()->client->id);
+            ->where('user_roles.client_id', $this->client_id);
     }
 
     public function white_papers(): HasMany
@@ -527,7 +526,7 @@ class User extends Authenticatable
 
     public function user_client(): HasOne
     {
-        return $this->hasOne(UserClient::class, 'user_id')->where('user_clients.client_id', Auth::user()->client->id);
+        return $this->hasOne(UserClient::class, 'user_id')->where('user_clients.client_id', $this->client_id);
     }
 
     public function leave_route(): HasMany

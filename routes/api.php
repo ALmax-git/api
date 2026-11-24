@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\BotNetController;
 use App\Http\Controllers\FileSystemController;
+use App\Http\Controllers\FundController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RealtorController;
 use App\Http\Controllers\ResolveController;
@@ -33,19 +34,25 @@ Route::prefix('v1/')->group(function () {
     Route::middleware('throttle:10,1')->group(function () {
         Route::post('app/boot/{xnamespace}', [AuthController::class, 'boot_xapp']);
         Route::post('auth/login', [AuthController::class, 'login']);
-        Route::post('auth/register', [AuthController::class, 'register'])->withoutMiddleware(EnsureTokenIsValid::class);
+        Route::post('auth/register', [AuthController::class, 'register_user'])->withoutMiddleware(EnsureTokenIsValid::class);
         Route::post('engine/resolve', [AuthController::class, 'resolve']);
         Route::POST('auth/register-device', [AuthController::class, 'register_device']);
         Route::POST('device/email/activate/{device_key}', [AuthController::class, 'email_device_activation']);
         Route::POST('auth/device-activation', [AuthController::class, 'device_activation']);
         Route::post('client/store/{uuid}/devices/safecode', [BotNetController::class, 'store_find_bot']);
-        Route::post('resolve/profile', [AccountsController::class, 'resoleve_profile']);
+        Route::post('resolve/user/profile', [AccountsController::class, 'resoleve_profile']);
+        Route::post('resolve/client/profile', [AccountsController::class, 'resoleve_client_profile']);
     });
 
     // Protected routes requiring a valid Sanctum Bearer token
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/user/profile', [AuthController::class, 'profile'])->withoutMiddleware(EnsureTokenIsValid::class);
+        Route::post('auth/user/guard/create', [AuthController::class, 'create_user_pin'])->withoutMiddleware(EnsureTokenIsValid::class);
+        Route::post('auth/user/guard/pin', [AuthController::class, 'verify_user_pin'])->withoutMiddleware(EnsureTokenIsValid::class);
+        Route::post('auth/user/guard/password', [AuthController::class, 'verify_user_password'])->withoutMiddleware(EnsureTokenIsValid::class);
+        Route::post('auth/user/guard/otp', [AuthController::class, 'verify_user_otp'])->withoutMiddleware(EnsureTokenIsValid::class);
+        Route::post('auth/user/guard/verify', [AuthController::class, 'request_user_otp'])->withoutMiddleware(EnsureTokenIsValid::class);
 
         Route::post('products/get/all', [ProductController::class, 'get_all_products']);
         Route::post('products/store/{uuid}/all', [ProductController::class, 'get_my_products']);
@@ -54,6 +61,7 @@ Route::prefix('v1/')->group(function () {
         Route::post('products/upload/media/{uuid}', [ProductController::class, 'upload_product_media']);
         Route::post('products/delete/{uuid}', [ProductController::class, 'delete_product']);
 
+        Route::post('client/store/journals/{uuid}/all', [FundController::class, 'journals_all']);
         Route::post('client/store/sales/{uuid}/all', [SalesController::class, 'store_sales']);
         Route::post('client/store/procurement/new', [SalesController::class, 'new_procurement']);
         Route::post('client/store/procurement/load', [SalesController::class, 'load_procurement']);

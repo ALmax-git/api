@@ -18,6 +18,10 @@ use Symfony\Polyfill\Uuid\Uuid;
 
 class AccountsController extends Controller
 {
+    public function resoleve_client_profile()
+    {
+        //
+    }
     public function resoleve_profile(Request $request)
     {
 
