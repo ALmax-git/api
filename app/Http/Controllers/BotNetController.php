@@ -9,10 +9,36 @@ use App\Models\BotCommand;
 use App\Models\BotEvent;
 use App\Models\BotPayload;
 use App\Models\Client;
+use App\Models\Country;
 use Illuminate\Http\JsonResponse;
 
 class BotNetController extends Controller
 {
+    public function get_geo()
+    {
+        $countries = Country::where('status', 'active')->get();
+        return response()->json([
+            'countries' => $countries->map(function ($country) {
+                return [
+                    'id' => $country->id,
+                    'name' => $country->name,
+                    'flag' => $country->flag,
+                    'states' => $country->states->map(function ($state) {
+                        return [
+                            'id' => $state->id,
+                            'name' => $state->name,
+                            'cities' => $state->cities->map(
+                                fn($city) => [
+                                    'id' => $city->id,
+                                    'name' => $city->name,
+                                ],
+                            ),
+                        ];
+                    }),
+                ];
+            })
+        ]);
+    }
     public function toggle_payload(Request $request, string $device_id, string $payload_id)
     {
         $payload = BotPayload::where('bot_id', get_id($device_id, 'bot'))->where('id', get_id($payload_id, 'bot'))->first();

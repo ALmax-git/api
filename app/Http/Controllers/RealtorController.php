@@ -222,7 +222,7 @@ class RealtorController extends Controller
                 $user = User::where('client_id', $client->id)->where('email', $request->input('email') ?? $request->email)->where('visibility', 'private')->first();
             }
             // error happen around here
-            Log::info('realttor', [$user, $client->id, $request->input('email') ?? $request->email]);
+            Log::info('realttor', [$request]);
             if (!$user) {
                 $user = new User();
             }
@@ -239,7 +239,7 @@ class RealtorController extends Controller
             $user->first_name = $request->input('first_name');
             $user->name = $request->input('name');
             $user->username = $request->input('username');
-            $user->email = $request->input('email') ?? $request->email;
+            $user->email = $request->input('email') ?? $request->input('bank.account_number') . '.' . rand(100000, 9999999) . '@realtor.temp';
             $user->surname = $request->input('surname');
             $user->last_name = $request->input('last_name');
             $user->phone_number = $request->input('phone_number');
@@ -276,47 +276,47 @@ class RealtorController extends Controller
             if (!$user_kin) {
                 $user_kin = new User();
             }
-            $user_kin->name = $request->input('next_of_kin.name');
-            $user_kin->email = $request->input('next_of_kin.email');
-            $user_kin->first_name = $request->input('next_of_kin.first_name');
-            $user_kin->surname = $request->input('next_of_kin.surname');
-            $user_kin->last_name = $request->input('next_of_kin.last_name');
-            $user_kin->phone_number = $request->input('next_of_kin.phone_number');
-            $user_kin->visibility = 'private';
-            $user_kin->status = UserStatus::UNDER_REVIEW->value;
-            $user_kin->country_id = $request->input('next_of_kin.country_id');
-            $user_kin->state_id = $request->input('next_of_kin.state_id');
-            $user_kin->city_id = $request->input('next_of_kin.city_id');
-            $user_kin->gender = $request->input('next_of_kin.gender');
-            $user_kin->address = $request->input('next_of_kin.address');
-            $user_kin->telephone = $request->input('next_of_kin.telephone');
-            $user_kin->nationality = $request->input('next_of_kin.nationality');
-            if (!$user_kin->password) {
-                $user_kin->password = Hash::make(generate_tx_ref()); // Generate a random password if not set
-            }
-            if (!$user_kin->username) {
-                $user_kin->username = uniqid('realtor');
-            }
-            $user_kin->save();
+            if ($request->input('next_of_kin.email')) {
+                $user_kin->name = $request->input('next_of_kin.name');
+                $user_kin->email = $request->input('next_of_kin.email');
+                $user_kin->first_name = $request->input('next_of_kin.first_name');
+                $user_kin->surname = $request->input('next_of_kin.surname');
+                $user_kin->last_name = $request->input('next_of_kin.last_name');
+                $user_kin->phone_number = $request->input('next_of_kin.phone_number');
+                $user_kin->visibility = 'private';
+                $user_kin->status = UserStatus::UNDER_REVIEW->value;
+                $user_kin->country_id = $request->input('next_of_kin.country_id');
+                $user_kin->state_id = $request->input('next_of_kin.state_id');
+                $user_kin->city_id = $request->input('next_of_kin.city_id');
+                $user_kin->gender = $request->input('next_of_kin.gender');
+                $user_kin->address = $request->input('next_of_kin.address');
+                $user_kin->telephone = $request->input('next_of_kin.telephone');
+                $user_kin->nationality = $request->input('next_of_kin.nationality');
+                if (!$user_kin->password) {
+                    $user_kin->password = Hash::make(generate_tx_ref()); // Generate a random password if not set
+                }
+                if (!$user_kin->username) {
+                    $user_kin->username = uniqid('realtor');
+                }
+                $user_kin->save();
 
-            UserNextOfKin::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                ],
-                [
-                    'kin_id' => $user_kin->id,
-                    'relationship' => $request->input('relation_with_kin'),
-                ]
-            );
-            $user->next_of_kin_id = $user_kin->id;
+                UserNextOfKin::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                    ],
+                    [
+                        'kin_id' => $user_kin->id,
+                        'relationship' => $request->input('relation_with_kin'),
+                    ]
+                );
+                $user->next_of_kin_id = $user_kin->id;
+            }
             $user->save();
 
             $referee = Referee::find($user->referee_id);
 
             //existing
             if ($user->_referees()->where('referee_number', $request->input('referee.referee_number'))->exists()) {
-
-
                 $referee = Referee::where('referee_number', $request->input('referee.referee_number'))->first();
                 if ($referee) {
                     $referee->name                      = $request->input('referee.name');
@@ -381,8 +381,8 @@ class RealtorController extends Controller
             $equity_application->property_address                         = $request->input('equity_application.property_address');
             $equity_application->property_type                        = $request->input('equity_application.property_type');
             $equity_application->property_value                       = $request->input('equity_application.property_value');
-            $equity_application->rsa_balance                      = $request->input('equity_application.rsa_balance');
-            $equity_application->rsa_holder                       = $request->input('equity_application.rsa_holder');
+            $equity_application->rsa_balance                        = $request->input('equity_application.rsa_balance');
+            $equity_application->rsa_holder                         = $request->input('equity_application.rsa_holder');
             $equity_application->equity_amount                        = $request->input('equity_application.equity_amount');
             $equity_application->supplementary_payment_amount                         = $request->input('equity_application.supplementary_payment_amount');
             $meta = $equity_application->meta                         ?? [];
@@ -392,6 +392,7 @@ class RealtorController extends Controller
             $meta['loan_repayment_period']      = $request->input('equity_application.meta.loan_repayment_period');
             $meta['monthly_salary_or_income'] = $request->input('equity_application.meta.monthly_salary_or_income');
             $meta['source_of_loan_repayment'] = $request->input('equity_application.meta.source_of_loan_repayment');
+            $meta['account_opening_date'] = $request->input('equity_application.meta.account_opening_date');
 
             $equity_application->meta = $meta;
             $equity_application->save();

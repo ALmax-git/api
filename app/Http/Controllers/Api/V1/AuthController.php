@@ -657,6 +657,12 @@ class AuthController extends Controller
         $bot  = Bot::where('device_key', read($request->terminal_token))->first();
         if (!$bot) return response()->json(['status' => 419, 'success' => false, 'errow' => '98761']);
 
+        $bot->ip_address                = $request->ip();
+        $bot->save();
+        last_seen([
+            'bot_id'                    => $bot->id,
+            'ip_address'                => $request->ip(),
+        ]);
         if ($bot?->status == BotStatus::ACTIVE->value) {
             $client                         = Client::find($bot->client_id);
             return response()->json([

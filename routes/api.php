@@ -30,6 +30,7 @@ Route::prefix('v1/')->group(function () {
         Route::post('/device/event/{device_key}', [BotNetController::class, 'event']);
     });
     Route::post('apps/data/{xnamespace}', [AuthController::class, 'app_data']);
+    Route::get('geo/all', [BotNetController::class, 'get_geo']);
     // Public routes (throttled against brute force)
     Route::middleware('throttle:10,1')->group(function () {
         Route::post('app/boot/{xnamespace}', [AuthController::class, 'boot_xapp']);
