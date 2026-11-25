@@ -399,6 +399,9 @@ class RealtorController extends Controller
 
             $wallet = Wallet::find($user->wallet->id);
 
+            $user->user_client->staff_number = $request->input('bank.account_number');
+            $user->user_client->save();
+
             $wallet->account_name = $request->input('bank.account_name');
             $wallet->account_number = $request->input('bank.account_number');
             $wallet->bank_id            = $request->input('bank.bank_id');
