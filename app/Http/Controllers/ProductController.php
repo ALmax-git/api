@@ -461,7 +461,7 @@ class ProductController extends Controller
                     ->orWhere('sub_title',      'like', "%{$this->search}%")
                     ->orWhere('description',    'like', "%{$this->search}%");
             })
-            ->where('client_id', $user->client_id)
+            ->where('client_id', $client->id)
 
             ->when($this->category_id ? read($this->category_id) : $this->category_id,      fn($query) => $query->where('category_id', $this->category_id ? read($this->category_id) : $this->category_id))
             ->when($this->sort === 'latest',    fn($query) => $query->latest())
@@ -470,8 +470,8 @@ class ProductController extends Controller
             ->when($this->sort === 'high',      fn($query) => $query->orderBy('sale_price', 'desc'))
             ->get();
 
-        $categories = ProductCategory::where('client_id', $user->client_id)
-            ->when($user->client->use_generic_product_categories || $user->client_id == 1, function ($query) {
+        $categories = ProductCategory::where('client_id', $client->id)
+            ->when($client->use_generic_product_categories || $client->id == 1, function ($query) {
                 $query->orWhere('client_id', null);
             })->where('status', 'active')->orderBy('title')->get();
         // $categories = $categories->map(function ($category) {
