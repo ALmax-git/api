@@ -211,7 +211,7 @@ class RealtorController extends Controller
             ], 404);
         }
 
-        Log::info($request->all());
+        // Log::info($request->all());
 
         try {
             DB::beginTransaction();
@@ -224,7 +224,7 @@ class RealtorController extends Controller
                 $user = User::where('client_id', $client->id)->where('email', $request->input('email') ?? $request->email)->where('visibility', 'private')->first();
             }
             // error happen around here
-            Log::info('realttor', [$request]);
+            // Log::info('realttor', [$request]);
             if (!$user) {
                 $user = new User();
             }
