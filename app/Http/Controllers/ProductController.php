@@ -486,6 +486,7 @@ class ProductController extends Controller
                         'name'                      => $p->name,
                         'brand'                     => $p->brand,
                         'sub_title'                 => $p->sub_title,
+                        'description'                 => $p->description,
                         'sold'                      => $p->sold,
                         'image_url'                 => $p->images->first()?->storage_path,
                         'emoji'                     => $p->emoji ?: '📦',
