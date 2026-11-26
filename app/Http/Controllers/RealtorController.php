@@ -211,7 +211,7 @@ class RealtorController extends Controller
             ], 404);
         }
 
-        // Log::info('Saving client for user: ' . $user->id . ', client: ' . $client->id, ['request_data' => $request->all()]);
+        Log::info($request->all());
 
         try {
             DB::beginTransaction();
