@@ -438,20 +438,20 @@ class ProductController extends Controller
         $client = Client::where('id', get_id($uuid, 'client'))->first();
         $user = $request->user();
 
-        if (!$user || !$client) {
+        if (!$client) {
             return response()->json([
                 'success' => false,
-                'message' => 'User not authenticated.',
+                'message' => 'Unauthenticated.',
             ], 401);
         }
-        if (
-            !(UserClient::where('user_id', $user->id)->where('client_id', $client->id)->where('is_staff', true)->exists())
-        ) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not authenticated by Client.',
-            ], 401);
-        }
+        // if (
+        //     !(UserClient::where('user_id', $user->id)->where('client_id', $client->id)->where('is_staff', true)->exists())
+        // ) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'User not authenticated by Client.',
+        //     ], 401);
+        // }
         $this->search = $request->search ?? '';
         $products = Product::query()
 
@@ -495,7 +495,7 @@ class ProductController extends Controller
                         'category'                  => $p->category?->title,
                         'category_id'               => $p->category ? $p->category?->id : null,
                         'discount'                  => $p->discount,
-                        'margin'                    => $p->margin,
+                        'margin'                    => $request->user() ? $p->margin : 0,
 
                         'labels' => $p->labels
                             ->map(
