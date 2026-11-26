@@ -491,6 +491,7 @@ class ProductController extends Controller
                         'emoji'                     => $p->emoji ?: '📦',
                         'color'                     => $p->color ?: '#6B7280',
                         'sale_price'                => $p->sale_price,
+                        'price'                     => $p->sale_price,
                         'available_stock'           => $p->is_non_stock_item ? 9999 : $p->available_stock,
                         'category'                  => $p->category?->title,
                         'category_id'               => $p->category ? $p->category?->id : null,
