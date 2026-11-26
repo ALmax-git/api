@@ -395,7 +395,7 @@ class RealtorController extends Controller
             $meta['monthly_salary_or_income'] = $request->input('equity_application.meta.monthly_salary_or_income');
             $meta['source_of_loan_repayment'] = $request->input('equity_application.meta.source_of_loan_repayment');
             $meta['account_opening_date'] = $request->input('equity_application.meta.account_opening_date');
-            $meta['bank_name'] = $request->input('bank.name');
+            $meta['bank_name'] = $request->input('bank.bank_name');
 
             $equity_application->meta = $meta;
             $equity_application->save();
