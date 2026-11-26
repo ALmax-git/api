@@ -45,7 +45,6 @@ Route::prefix('v1/')->group(function () {
         Route::post('resolve/client/profile', [AccountsController::class, 'resoleve_client_profile']);
     });
 
-    Route::post('products/store/{uuid}/all', [ProductController::class, 'get_my_products']);
     // Protected routes requiring a valid Sanctum Bearer token
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('products/upload/media/{uuid}', [ProductController::class, 'upload_product_media']);
@@ -67,6 +66,7 @@ Route::prefix('v1/')->group(function () {
         Route::post('client/store/procurement/new', [SalesController::class, 'new_procurement']);
         Route::post('client/store/procurement/load', [SalesController::class, 'load_procurement']);
         Route::post('client/staffs/{uuid}/all', [AccountsController::class, 'store_staffs']);
+        Route::post('products/store/{uuid}/all', [ProductController::class, 'get_my_products']);
 
         Route::post('client/store/{uuid}/devices/create', [BotNetController::class, 'create_device']);
         Route::post('client/store/{uuid}/devices/all', [BotNetController::class, 'store_devices']);
