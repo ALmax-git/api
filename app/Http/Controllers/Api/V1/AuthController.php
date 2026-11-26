@@ -790,7 +790,7 @@ class AuthController extends Controller
                     ($passwordHash && Hash::check($request->password, $passwordHash))
                 );
 
-            if (! $user || ! $isValidPassword) {
+            if (!$user || !$isValidPassword) {
                 throw ValidationException::withMessages([
                     'email' => ['An Invalid credentials provided for Core-X authentication...'],
                 ]);

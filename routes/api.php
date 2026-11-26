@@ -46,9 +46,9 @@ Route::prefix('v1/')->group(function () {
     });
 
     Route::post('products/store/{uuid}/all', [ProductController::class, 'get_my_products']);
-    Route::post('products/upload/media/{uuid}', [ProductController::class, 'upload_product_media']);
     // Protected routes requiring a valid Sanctum Bearer token
     Route::middleware('auth:sanctum')->group(function () {
+        Route::post('products/upload/media/{uuid}', [ProductController::class, 'upload_product_media']);
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/user/profile', [AuthController::class, 'profile'])->withoutMiddleware(EnsureTokenIsValid::class);
         Route::post('auth/user/guard/create', [AuthController::class, 'create_user_pin'])->withoutMiddleware(EnsureTokenIsValid::class);
