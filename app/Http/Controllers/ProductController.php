@@ -498,6 +498,7 @@ class ProductController extends Controller
                         'category_id'               => $p->category ? $p->category?->id : null,
                         'discount'                  => $p->discount,
                         'margin'                    => $request->user() ? $p->margin : 0,
+                        'ingredients'               => isset($p->meta['ingredients']) ? $p->meta['ingredients'] : [],
 
                         'labels' => $p->labels
                             ->map(
