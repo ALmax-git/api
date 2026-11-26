@@ -215,8 +215,10 @@ class RealtorController extends Controller
 
         try {
             DB::beginTransaction();
-
-            $user = User::where('bvn', $request->input('bvn'))->first();
+            $user = null;
+            if ($request->input('bvn') != '') {
+                $user = User::where('bvn', $request->input('bvn'))->first();
+            }
 
             if (!$user) {
                 $user = User::where('client_id', $client->id)->where('email', $request->input('email') ?? $request->email)->where('visibility', 'private')->first();
@@ -331,7 +333,7 @@ class RealtorController extends Controller
                 }
             }
             //not > 2
-            if ($user->_referees()->count() >= 2) {
+            if ($user->_referees()->count() >= 2 && $user->_referees()->where('referee_number', $request->input('referee.referee_number'))->exists()) {
                 // return response()->json([
                 //     'message' => 'You can only add a maximum of 2 referees for this user.'
                 // ], 400);
@@ -393,6 +395,7 @@ class RealtorController extends Controller
             $meta['monthly_salary_or_income'] = $request->input('equity_application.meta.monthly_salary_or_income');
             $meta['source_of_loan_repayment'] = $request->input('equity_application.meta.source_of_loan_repayment');
             $meta['account_opening_date'] = $request->input('equity_application.meta.account_opening_date');
+            $meta['bank_name'] = $request->input('bank.name');
 
             $equity_application->meta = $meta;
             $equity_application->save();
